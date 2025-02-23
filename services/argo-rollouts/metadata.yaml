@@ -1,0 +1,250 @@
+displayName: argo-rollouts
+description: A Helm chart for Argo Rollouts
+category:
+- artifact-hub
+type: catalog
+allowMultipleInstances: false
+scope:
+- workspace
+licensing:
+- Ultimate
+- Enterprise
+certifications:
+overview: |
+    # Argo Rollouts Chart
+    
+    A Helm chart for Argo Rollouts, progressive delivery for Kubernetes.
+    
+    Source code can be found [here](https://github.com/argoproj/argo-rollouts)
+    
+    ## Additional Information
+    
+    This is a **community maintained** chart. This chart installs [argo-rollouts](https://argoproj.github.io/argo-rollouts/), progressive delivery for Kubernetes.
+    
+    The default installation is intended to be similar to the provided Argo Rollouts [releases](https://github.com/argoproj/argo-rollouts/releases).
+    
+    ## Prerequisites
+    
+    - Kubernetes 1.7+
+    - Helm v3.0.0+
+    
+    ## Installing the Chart
+    
+    To install the chart with the release name `my-release`:
+    
+    ```console
+    $ helm repo add argo https://argoproj.github.io/argo-helm
+    $ helm install my-release argo/argo-rollouts
+    ```
+    
+    ### UI Dashboard
+    
+    If dashboard is installed by `--set dashboard.enabled=true`, checkout the argo-rollouts dashboard by
+    `kubectl port-forward service/argo-rollouts-dashboard 31000:3100` and pointing the browser to `localhost:31000`
+    
+    | :warning: WARNING when the Service type is set to LoadBalancer or NodePort |
+    |:---------------------------------------------------------------------------|
+    | The chart provides an option to change the service type (`dashboard.service.type`). Also it provides the ability to expose the dashboard via Ingress. Dashboard was never intended to be exposed as an administrative console -- it started out as a local view available via CLI. It should be protected by something (e.g. network access or even better an oauth proxy). |
+    
+    ## Changelog
+    
+    For full list of changes please check ArtifactHub [changelog].
+    
+    ## Chart Values
+    
+    ### General parameters
+    
+    | Key | Type | Default | Description |
+    |-----|------|---------|-------------|
+    | apiVersionOverrides.ingress | string | `""` | String to override apiVersion of ingresses rendered by this helm chart |
+    | clusterInstall | bool | `true` | `false` runs controller in namespaced mode (does not require cluster RBAC) |
+    | crdAnnotations | object | `{}` | Annotations to be added to all CRDs |
+    | createClusterAggregateRoles | bool | `true` | flag to enable creation of cluster aggregate roles (requires cluster RBAC) |
+    | extraObjects | list | `[]` | Additional manifests to deploy within the chart. A list of objects. |
+    | fullnameOverride | string | `nil` | String to fully override "argo-rollouts.fullname" template |
+    | global.deploymentAnnotations | object | `{}` | Annotations for all deployed Deployments |
+    | global.deploymentLabels | object | `{}` | Labels for all deployed Deployments |
+    | global.revisionHistoryLimit | int | `10` | Number of old deployment ReplicaSets to retain. The rest will be garbage collected. |
+    | imagePullSecrets | list | `[]` | Secrets with credentials to pull images from a private registry. Registry secret names as an array. |
+    | installCRDs | bool | `true` | Install and upgrade CRDs |
+    | keepCRDs | bool | `true` | Keep CRD's on helm uninstall |
+    | kubeVersionOverride | string | `""` | Override the Kubernetes version, which is used to evaluate certain manifests |
+    | nameOverride | string | `nil` | String to partially override "argo-rollouts.fullname" template |
+    | notifications.configmap.create | bool | `true` | Whether to create notifications configmap |
+    | notifications.notifiers | object | `{}` | Configures notification services |
+    | notifications.secret.annotations | object | `{}` | Annotations to be added to the notifications secret |
+    | notifications.secret.create | bool | `false` | Whether to create notifications secret. |
+    | notifications.secret.items | object | `{}` | Generic key:value pairs to be inserted into the notifications secret |
+    | notifications.subscriptions | list | `[]` | The subscriptions define the subscriptions to the triggers in a general way for all rollouts |
+    | notifications.templates | object | `{}` | Notification templates |
+    | notifications.triggers | object | `{}` | The trigger defines the condition when the notification should be sent |
+    | providerRBAC.additionalRules | list | `[]` | Additional RBAC rules for others providers |
+    | providerRBAC.enabled | bool | `true` | Toggles addition of provider-specific RBAC rules to the controller Role and ClusterRole |
+    | providerRBAC.providers.ambassador | bool | `true` | Adds RBAC rules for the Ambassador provider |
+    | providerRBAC.providers.apisix | bool | `true` | Adds RBAC rules for the Apisix provider |
+    | providerRBAC.providers.awsAppMesh | bool | `true` | Adds RBAC rules for the AWS App Mesh provider |
+    | providerRBAC.providers.awsLoadBalancerController | bool | `true` | Adds RBAC rules for the AWS Load Balancer Controller provider |
+    | providerRBAC.providers.contour | bool | `true` | Adds RBAC rules for the Contour provider, see `https://github.com/argoproj-labs/rollouts-plugin-trafficrouter-contour/blob/main/README.md` |
+    | providerRBAC.providers.gatewayAPI | bool | `true` | Adds RBAC rules for the Gateway API provider |
+    | providerRBAC.providers.glooPlatform | bool | `true` | Adds RBAC rules for the Gloo Platform provider, see `https://github.com/argoproj-labs/rollouts-plugin-trafficrouter-glooplatform/blob/main/README.md` |
+    | providerRBAC.providers.istio | bool | `true` | Adds RBAC rules for the Istio provider |
+    | providerRBAC.providers.smi | bool | `true` | Adds RBAC rules for the SMI provider |
+    | providerRBAC.providers.traefik | bool | `true` | Adds RBAC rules for the Traefik provider |
+    
+    ### Controller
+    
+    | Key | Type | Default | Description |
+    |-----|------|---------|-------------|
+    | containerSecurityContext | object | `{"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]},"readOnlyRootFilesystem":true,"seccompProfile":{"type":"RuntimeDefault"}}` | Security Context to set on container level |
+    | controller.affinity | object | `{}` | Assign custom [affinity] rules to the deployment |
+    | controller.component | string | `"rollouts-controller"` | Value of label `app.kubernetes.io/component` |
+    | controller.containerPorts.healthz | int | `8080` | Healthz container port |
+    | controller.containerPorts.metrics | int | `8090` | Metrics container port |
+    | controller.createClusterRole | bool | `true` | flag to enable creation of cluster controller role (requires cluster RBAC) |
+    | controller.deploymentAnnotations | object | `{}` | Annotations to be added to the controller deployment |
+    | controller.deploymentLabels | object | `{}` | Labels to be added to the controller deployment |
+    | controller.extraArgs | list | `[]` | Additional command line arguments to pass to rollouts-controller.  A list of flags. |
+    | controller.extraContainers | list | `[]` | Literal yaml for extra containers to be added to controller deployment. |
+    | controller.extraEnv | list | `[]` | Additional environment variables for rollouts-controller. A list of name/value maps. |
+    | controller.image.pullPolicy | string | `"IfNotPresent"` | Image pull policy |
+    | controller.image.registry | string | `"quay.io"` | Registry to use |
+    | controller.image.repository | string | `"argoproj/argo-rollouts"` | Repository to use |
+    | controller.image.tag | string | `""` | Overrides the image tag (default is the chart appVersion) |
+    | controller.initContainers | list | `[]` | Init containers to add to the rollouts controller pod |
+    | controller.lifecycle | object | `{}` | Specify lifecycle hooks for the  controller |
+    | controller.livenessProbe | object | See [values.yaml] | Configure liveness [probe] for the controller |
+    | controller.logging.format | string | `"text"` | Set the logging format (one of: `text`, `json`) |
+    | controller.logging.kloglevel | string | `"0"` | Set the klog logging level |
+    | controller.logging.level | string | `"info"` | Set the logging level (one of: `debug`, `info`, `warn`, `error`) |
+    | controller.metricProviderPlugins | list | `[]` | Configures 3rd party metric providers for controller |
+    | controller.metrics.enabled | bool | `false` | Deploy metrics service |
+    | controller.metrics.service.annotations | object | `{}` | Service annotations |
+    | controller.metrics.service.port | int | `8090` | Metrics service port |
+    | controller.metrics.service.portName | string | `"metrics"` | Metrics service port name |
+    | controller.metrics.serviceMonitor.additionalAnnotations | object | `{}` | Annotations to be added to the ServiceMonitor |
+    | controller.metrics.serviceMonitor.additionalLabels | object | `{}` | Labels to be added to the ServiceMonitor |
+    | controller.metrics.serviceMonitor.enabled | bool | `false` | Enable a prometheus ServiceMonitor |
+    | controller.metrics.serviceMonitor.metricRelabelings | list | `[]` | MetricRelabelConfigs to apply to samples before ingestion |
+    | controller.metrics.serviceMonitor.namespace | string | `""` | Namespace to be used for the ServiceMonitor |
+    | controller.metrics.serviceMonitor.relabelings | list | `[]` | RelabelConfigs to apply to samples before scraping |
+    | controller.nodeSelector | object | `{}` | [Node selector] |
+    | controller.pdb.annotations | object | `{}` | Annotations to be added to controller [Pod Disruption Budget] |
+    | controller.pdb.enabled | bool | `false` | Deploy a [Pod Disruption Budget] for the controller |
+    | controller.pdb.labels | object | `{}` | Labels to be added to controller [Pod Disruption Budget] |
+    | controller.pdb.maxUnavailable | string | `nil` | Maximum number / percentage of pods that may be made unavailable |
+    | controller.pdb.minAvailable | string | `nil` | Minimum number / percentage of pods that should remain scheduled |
+    | controller.podAnnotations | object | `{}` | Annotations to be added to application controller pods |
+    | controller.podLabels | object | `{}` | Labels to be added to the application controller pods |
+    | controller.priorityClassName | string | `""` | [priorityClassName] for the controller |
+    | controller.readinessProbe | object | See [values.yaml] | Configure readiness [probe] for the controller |
+    | controller.replicas | int | `2` | The number of controller pods to run |
+    | controller.resources | object | `{}` | Resource limits and requests for the controller pods. |
+    | controller.terminationGracePeriodSeconds | int | `30` | terminationGracePeriodSeconds for container lifecycle hook |
+    | controller.tolerations | list | `[]` | [Tolerations] for use with node taints |
+    | controller.topologySpreadConstraints | list | `[]` | Assign custom [TopologySpreadConstraints] rules to the controller |
+    | controller.trafficRouterPlugins | list | `[]` | Configures 3rd party traffic router plugins for controller |
+    | controller.volumeMounts | list | `[]` | Additional volumeMounts to add to the controller container |
+    | controller.volumes | list | `[]` | Additional volumes to add to the controller pod |
+    | podAnnotations | object | `{}` | Annotations for the all deployed pods |
+    | podLabels | object | `{}` | Labels to be added to the Rollout pods |
+    | podSecurityContext | object | `{"runAsNonRoot":true}` | Security Context to set on pod level |
+    | serviceAccount.annotations | object | `{}` | Annotations to add to the service account |
+    | serviceAccount.create | bool | `true` | Specifies whether a service account should be created |
+    | serviceAccount.name | string | `""` | The name of the service account to use. If not set and create is true, a name is generated using the fullname template |
+    | serviceAnnotations | object | `{}` | Annotations to be added to the Rollout service |
+    
+    ### Dashboard
+    
+    | Key | Type | Default | Description |
+    |-----|------|---------|-------------|
+    | dashboard.affinity | object | `{}` | Assign custom [affinity] rules to the deployment |
+    | dashboard.component | string | `"rollouts-dashboard"` | Value of label `app.kubernetes.io/component` |
+    | dashboard.containerSecurityContext | object | `{}` | Security Context to set on container level |
+    | dashboard.createClusterRole | bool | `true` | flag to enable creation of dashbord cluster role (requires cluster RBAC) |
+    | dashboard.deploymentAnnotations | object | `{}` | Annotations to be added to the dashboard deployment |
+    | dashboard.deploymentLabels | object | `{}` | Labels to be added to the dashboard deployment |
+    | dashboard.enabled | bool | `false` | Deploy dashboard server |
+    | dashboard.extraArgs | list | `[]` | Additional command line arguments to pass to rollouts-dashboard. A list of flags. |
+    | dashboard.extraEnv | list | `[]` | Additional environment variables for rollouts-dashboard. A list of name/value maps. |
+    | dashboard.image.pullPolicy | string | `"IfNotPresent"` | Image pull policy |
+    | dashboard.image.registry | string | `"quay.io"` | Registry to use |
+    | dashboard.image.repository | string | `"argoproj/kubectl-argo-rollouts"` | Repository to use |
+    | dashboard.image.tag | string | `""` | Overrides the image tag (default is the chart appVersion) |
+    | dashboard.ingress.annotations | object | `{}` | Dashboard ingress annotations |
+    | dashboard.ingress.enabled | bool | `false` | Enable dashboard ingress support |
+    | dashboard.ingress.extraPaths | list | `[]` | Dashboard ingress extra paths |
+    | dashboard.ingress.hosts | list | `[]` | Dashboard ingress hosts |
+    | dashboard.ingress.ingressClassName | string | `""` | Dashboard ingress class name |
+    | dashboard.ingress.labels | object | `{}` | Dashboard ingress labels |
+    | dashboard.ingress.pathType | string | `"Prefix"` | Dashboard ingress path type |
+    | dashboard.ingress.paths | list | `["/"]` | Dashboard ingress paths |
+    | dashboard.ingress.tls | list | `[]` | Dashboard ingress tls |
+    | dashboard.logging.kloglevel | string | `"0"` | Set the klog logging level |
+    | dashboard.logging.level | string | `"info"` | Set the logging level (one of: `debug`, `info`, `warn`, `error`) |
+    | dashboard.nodeSelector | object | `{}` | [Node selector] |
+    | dashboard.pdb.annotations | object | `{}` | Annotations to be added to dashboard [Pod Disruption Budget] |
+    | dashboard.pdb.enabled | bool | `false` | Deploy a [Pod Disruption Budget] for the dashboard |
+    | dashboard.pdb.labels | object | `{}` | Labels to be added to dashboard [Pod Disruption Budget] |
+    | dashboard.pdb.maxUnavailable | string | `nil` | Maximum number / percentage of pods that may be made unavailable |
+    | dashboard.pdb.minAvailable | string | `nil` | Minimum number / percentage of pods that should remain scheduled |
+    | dashboard.podAnnotations | object | `{}` | Annotations to be added to application dashboard pods |
+    | dashboard.podLabels | object | `{}` | Labels to be added to the application dashboard pods |
+    | dashboard.podSecurityContext | object | `{"runAsNonRoot":true}` | Security Context to set on pod level |
+    | dashboard.priorityClassName | string | `""` | [priorityClassName] for the dashboard server |
+    | dashboard.readonly | bool | `false` | Set cluster role to readonly |
+    | dashboard.replicas | int | `1` | The number of dashboard pods to run |
+    | dashboard.resources | object | `{}` | Resource limits and requests for the dashboard pods. |
+    | dashboard.service.annotations | object | `{}` | Service annotations |
+    | dashboard.service.externalIPs | list | `[]` | Dashboard service external IPs |
+    | dashboard.service.labels | object | `{}` | Service labels |
+    | dashboard.service.loadBalancerClass | string | `""` | The class of the load balancer implementation |
+    | dashboard.service.loadBalancerIP | string | `""` | LoadBalancer will get created with the IP specified in this field |
+    | dashboard.service.loadBalancerSourceRanges | list | `[]` | Source IP ranges to allow access to service from |
+    | dashboard.service.nodePort | int | `nil` | Service nodePort |
+    | dashboard.service.port | int | `3100` | Service port |
+    | dashboard.service.portName | string | `"dashboard"` | Service port name |
+    | dashboard.service.targetPort | int | `3100` | Service target port |
+    | dashboard.service.type | string | `"ClusterIP"` | Sets the type of the Service |
+    | dashboard.serviceAccount.annotations | object | `{}` | Annotations to add to the dashboard service account |
+    | dashboard.serviceAccount.create | bool | `true` | Specifies whether a dashboard service account should be created |
+    | dashboard.serviceAccount.name | string | `""` | The name of the service account to use. If not set and create is true, a name is generated using the fullname template |
+    | dashboard.tolerations | list | `[]` | [Tolerations] for use with node taints |
+    | dashboard.topologySpreadConstraints | list | `[]` | Assign custom [TopologySpreadConstraints] rules to the dashboard server |
+    | dashboard.volumeMounts | list | `[]` | Additional volumeMounts to add to the dashboard container |
+    | dashboard.volumes | list | `[]` | Additional volumes to add to the dashboard pod |
+    
+    ## Upgrading
+    
+    ### To 2.0.0
+    
+    * The argo-rollouts dashboard is added to the template and can be enabled by setting `dashboard.enabled=true`.
+    * There is a breaking change where the selector label `app.kubernetes.io/component: {{ .Values.controller.component }}` is added to rollout's deployment and service in order to distinguish between the controller and the dashboard component.
+      To upgrade an existing installation, please **add the `--force` parameter** to the `helm upgrade` command or **delete the Deployment and Service resource** before you upgrade. This is necessary because Deployment's label selector is immutable.
+    
+    ### To 1.0.0
+    
+    * This is a breaking change which only supports Helm v3.0.0+ now. If you still use Helm v2, please consider upgrading because v2 is EOL since November 2020.  
+      To migrate to Helm v3 please have a look at the [Helm 2to3 Plugin](https://github.com/helm/helm-2to3). This tool will convert the existing ConfigMap used for Tiller to a Secret of type `helm.sh/release.v1`.
+    * `quay.io` is the default registry now
+    * We introduce a template function for the labels here to reduce code duplication. This also affects the Deployment `matchLabels` selector.  
+      To upgrade an existing installation, please **add the `--force` parameter** to the `helm upgrade` command or **delete the Deployment resource** before you upgrade. This is necessary because Deployment's label selector is immutable.
+    * All resources are now prefixed with the template `"argo-rollouts.fullname"`.
+      This enables the users to override resource names via the `nameOverride` and `fullnameOverride` parameters.
+    * Breaking parameters update
+      * `securityContext` was renamed to `containerSecurityContext`
+      * Added `controller.image.registry`. Prior to this chart version you had to override the registry via `controller.image.repository`
+    
+    ----------------------------------------------
+    Autogenerated from chart metadata using [helm-docs](https://github.com/norwoodj/helm-docs)
+    
+    [affinity]: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
+    [Node selector]: https://kubernetes.io/docs/user-guide/node-selection/
+    [probe]: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#container-probes
+    [Tolerations]: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+    [TopologySpreadConstraints]: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/
+    [priorityClassName]: https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/
+    [Pod Disruption Budget]: https://kubernetes.io/docs/concepts/workloads/pods/disruptions/#pod-disruption-budgets
+    [values.yaml]: values.yaml
+    [changelog]: https://artifacthub.io/packages/helm/argo/argo-rollouts?modal=changelog
+    
+icon: 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

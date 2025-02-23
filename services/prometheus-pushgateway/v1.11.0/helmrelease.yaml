@@ -1,0 +1,25 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: prometheus-pushgateway
+  namespace: ${releaseNamespace}
+spec:
+  chart:
+    spec:
+      chart: prometheus-pushgateway
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: prometheus-community
+        namespace: ${releaseNamespace}
+      version: 3.0.0
+  interval: 1m0s
+  targetNamespace: ${releaseNamespace}
+  releaseName: prometheus-pushgateway
+  valuesFrom:
+    - kind: ConfigMap
+      name: prometheus-pushgateway-3.0.0-defaults
+    - kind: ConfigMap
+      name: prometheus-pushgateway-overrides
+      optional: true

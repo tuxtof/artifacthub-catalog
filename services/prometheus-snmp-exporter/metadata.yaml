@@ -1,0 +1,172 @@
+displayName: prometheus-snmp-exporter
+description: Prometheus SNMP Exporter
+category:
+- artifact-hub
+type: catalog
+allowMultipleInstances: false
+scope:
+- workspace
+licensing:
+- Ultimate
+- Enterprise
+certifications:
+overview: |
+    # Prometheus SNMP Exporter
+    
+    An Prometheus exporter that exposes information gathered from SNMP.
+    
+    This chart creates a [SNMP Exporter](https://github.com/prometheus/snmp_exporter) deployment on a [Kubernetes](http://kubernetes.io) cluster using the [Helm](https://helm.sh) package manager.
+    
+    ## Prerequisites
+    
+    - Kubernetes 1.8+ with Beta APIs enabled
+    
+    ## Add Helm repository
+    
+    ```console
+    helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+    helm repo update
+    ```
+    
+    _See [`helm repo`](https://helm.sh/docs/helm/helm_repo/) for command documentation._
+    
+    ## Install Chart
+    
+    ```console
+    helm install [RELEASE_NAME] prometheus-community/prometheus-snmp-exporter
+    ```
+    
+    _See [configuration](#configuration) below._
+    
+    _See [helm install](https://helm.sh/docs/helm/helm_install/) for command documentation._
+    
+    ## Uninstall Chart
+    
+    ```console
+    helm uninstall [RELEASE_NAME]
+    ```
+    
+    This removes all the Kubernetes components associated with the chart and deletes the release.
+    
+    _See [helm uninstall](https://helm.sh/docs/helm/helm_uninstall/) for command documentation._
+    
+    ## Upgrading Chart
+    
+    ```console
+    helm upgrade [RELEASE_NAME] [CHART] --install
+    ```
+    
+    _See [helm upgrade](https://helm.sh/docs/helm/helm_upgrade/) for command documentation._
+    
+    ### Upgrading an existing Release to a new major version
+    
+    A major chart version change (like v1.2.3 -> v2.0.0) indicates that there is an incompatible breaking change needing manual actions.
+    
+    ### To 1.0.0
+    
+    This version allows multiple Targets to be specified when using ServiceMonitor. When you use ServiceMonitor, please rewrite below:
+    
+    ```yaml
+    serviceMonitor:
+      enabled: true
+      params:
+        enabled: true
+        conf:
+          module:
+          - if_mib
+          target:
+          - 127.0.0.1
+    ```
+    
+    to this:
+    
+    ```yaml
+    serviceMonitor:
+      enabled: true
+      params:
+      - module:
+        - if_mib
+        name: device1
+        target: 127.0.0.1
+    ```
+    
+    ### To 2.0.0
+    
+    This version changes the `serviceMonitor.namespace` value from `monitoring` to the namespace the release is deployed to.
+    
+    ### To 3.0.0
+    
+    This version upgrades snmp-exporter version to 0.24.1, which introduces breaking change to configuration format.
+    See [Module and Auth Split Migration](https://github.com/prometheus/snmp_exporter/blob/main/auth-split-migration.md) for more details.
+    
+    ### To 4.0.0
+    
+    This version contain major changes & The [configmap-reload](https://github.com/jimmidyson/configmap-reload) container was replaced by the [prometheus-config-reloader](https://github.com/prometheus-operator/prometheus-operator/tree/main/cmd/prometheus-config-reloader).
+    
+    ### To 5.0.0
+    
+    This version changes the default image repository from using Dockerhub to Quay.
+    
+    ### To 6.0.0
+    
+    This version changes the default health check path from `/health` to `/`
+    
+    ### To 7.0.0
+    
+    This version changes the sysUpTime metric by removing from the if_mib module and including it as part of the new system module, along with other useful system related metrics.
+    Update your scrape definitions to include the system module if you need sysUpTime.
+    
+    ## Configuration
+    
+    See [Customizing the Chart Before Installing](https://helm.sh/docs/intro/using_helm/#customizing-the-chart-before-installing). To see all configurable options with detailed comments, visit the chart's [values.yaml](./values.yaml), or run these configuration commands:
+    
+    ```console
+    # Helm 2
+    $ helm inspect values prometheus-community/prometheus-snmp-exporter
+    
+    # Helm 3
+    $ helm show values prometheus-community/prometheus-snmp-exporter
+    ```
+    
+    See [prometheus/snmp_exporter/README.md](https://github.com/prometheus/snmp_exporter/) for further information.
+    
+    ### Prometheus Configuration
+    
+    The snmp exporter needs to be passed the address as a parameter, this can be done with relabelling.
+    
+    Example config:
+    
+    ```yaml
+    scrape_configs:
+      - job_name: 'snmp'
+        static_configs:
+          - targets:
+            - 192.168.1.2  # SNMP device.
+        metrics_path: /snmp
+        params:
+          module: [if_mib]
+        relabel_configs:
+          - source_labels: [__address__]
+            target_label: __param_target
+          - source_labels: [__param_target]
+            target_label: instance
+          - target_label: __address__
+            replacement: my-service-name:9116  # The SNMP exporter's Service name and port.
+    ```
+    
+    Example configuration via a ServiceMonitor
+    
+    ```yaml
+    serviceMonitor:
+      enabled: true
+      relabelings:
+        - sourceLabels: [__param_target]
+          targetLabel: instance
+      params:
+        - module:
+            - fortigate_snmp
+          name: device1
+          target: 192.168.1.2 # SNMP device
+    ```
+    
+icon: PCFkb2N0eXBlIGh0bWw+PGh0bWwgbGFuZz0iZW4iPjxoZWFkPjxtZXRhIGNoYXJzZXQ9InV0Zi04Ii8+PGxpbmsgcmVsPSJzaG9ydGN1dCBpY29uIiB0eXBlPSJpbWFnZS9wbmciIGhyZWY9Ii9zdGF0aWMvbWVkaWEvbG9nb192Mi5wbmciLz48bWV0YSBuYW1lPSJ2aWV3cG9ydCIgY29udGVudD0id2lkdGg9ZGV2aWNlLXdpZHRoLGluaXRpYWwtc2NhbGU9MSIvPjxtZXRhIG5hbWU9InRoZW1lLWNvbG9yIiBjb250ZW50PSIjNDE3NTk4Ii8+PGxpbmsgcmVsPSJhcHBsZS10b3VjaC1pY29uIiBocmVmPSIvc3RhdGljL21lZGlhL2xvZ28xOTJfdjIucG5nIi8+PGxpbmsgcmVsPSJhcHBsZS10b3VjaC1pY29uIiBzaXplcz0iNTEyeDUxMiIgaHJlZj0iL3N0YXRpYy9tZWRpYS9sb2dvNTEyX3YyLnBuZyIvPjxsaW5rIHJlbD0ibWFuaWZlc3QiIGhyZWY9Ii9tYW5pZmVzdC5qc29uIi8+PHRpdGxlPkFydGlmYWN0IEh1YjwvdGl0bGU+PG1ldGEgbmFtZT0iZGVzY3JpcHRpb24iIGNvbnRlbnQ9IkZpbmQsIGluc3RhbGwgYW5kIHB1Ymxpc2ggQ2xvdWQgTmF0aXZlIHBhY2thZ2VzIi8+PG1ldGEgbmFtZT0ia2V5d29yZHMiIGNvbnRlbnQ9IkFydGlmYWN0IEh1YiwgQ2xvdWQgTmF0aXZlLCBLdWJlcm5ldGVzLCBwYWNrYWdlcyIvPjxtZXRhIG5hbWU9ImFydGlmYWN0aHViOnNpdGVOYW1lIiBjb250ZW50PSJBcnRpZmFjdCBIdWIiLz48bWV0YSBuYW1lPSJhcnRpZmFjdGh1Yjp3ZWJzaXRlTG9nbyIgY29udGVudD0iL3N0YXRpYy9tZWRpYS9sb2dvL2FydGlmYWN0aHViLWJyYW5kLXdoaXRlLnN2ZyIvPjxtZXRhIG5hbWU9ImFydGlmYWN0aHViOnByaW1hcnlDb2xvciIgY29udGVudD0iIzQxNzU5OCIvPjxtZXRhIG5hbWU9ImFydGlmYWN0aHViOnNlY29uZGFyeUNvbG9yIiBjb250ZW50PSIjMkQ0ODU3Ii8+PG1ldGEgbmFtZT0iYXJ0aWZhY3RodWI6Z2l0aHViQXV0aCIgY29udGVudD0idHJ1ZSIvPjxtZXRhIG5hbWU9ImFydGlmYWN0aHViOmdvb2dsZUF1dGgiIGNvbnRlbnQ9InRydWUiLz48bWV0YSBuYW1lPSJhcnRpZmFjdGh1YjpvaWRjQXV0aCIgY29udGVudD0iZmFsc2UiLz48bWV0YSBuYW1lPSJhcnRpZmFjdGh1YjpzYW1wbGVRdWVyaWVzIiBjb250ZW50PSJbeyYjMzQ7bmFtZSYjMzQ7OiYjMzQ7T0xNIG9wZXJhdG9ycyBmb3IgZGF0YWJhc2VzJiMzNDssJiMzNDtxdWVyeXN0cmluZyYjMzQ7OiYjMzQ7a2luZD0zXHUwMDI2Y2F0ZWdvcnk9MiYjMzQ7fSx7JiMzNDtuYW1lJiMzNDs6JiMzNDtQYWNrYWdlcyBvZiBhbnkga2luZCByZWxhdGVkIHRvIGV0Y2QmIzM0OywmIzM0O3F1ZXJ5c3RyaW5nJiMzNDs6JiMzNDt0c19xdWVyeV93ZWI9ZXRjZCYjMzQ7fSx7JiMzNDtuYW1lJiMzNDs6JiMzNDtGYWxjbyBydWxlcyBmb3IgQ1ZFJiMzNDssJiMzNDtxdWVyeXN0cmluZyYjMzQ7OiYjMzQ7a2luZD0xXHUwMDI2dHNfcXVlcnlfd2ViPWN2ZSYjMzQ7fSx7JiMzNDtuYW1lJiMzNDs6JiMzNDtPTE0gb3BlcmF0b3JzIGluIHRoZSBtb25pdG9yaW5nIGNhdGVnb3J5JiMzNDssJiMzNDtxdWVyeXN0cmluZyYjMzQ7OiYjMzQ7a2luZD0zXHUwMDI2Y2F0ZWdvcnk9NCYjMzQ7fSx7JiMzNDtuYW1lJiMzNDs6JiMzNDtQYWNrYWdlcyBmcm9tIHZlcmlmaWVkIHB1Ymxpc2hlcnMmIzM0OywmIzM0O3F1ZXJ5c3RyaW5nJiMzNDs6JiMzNDt2ZXJpZmllZF9wdWJsaXNoZXI9dHJ1ZSYjMzQ7fSx7JiMzNDtuYW1lJiMzNDs6JiMzNDtPZmZpY2lhbCBQcm9tZXRoZXVzIHBhY2thZ2VzJiMzNDssJiMzNDtxdWVyeXN0cmluZyYjMzQ7OiYjMzQ7dHNfcXVlcnlfd2ViPXByb21ldGhldXNcdTAwMjZvZmZpY2lhbD10cnVlJiMzNDt9LHsmIzM0O25hbWUmIzM0OzomIzM0O09wZXJhdG9ycyB3aXRoIGF1dG8gcGlsb3QgY2FwYWJpbGl0aWVzJiMzNDssJiMzNDtxdWVyeXN0cmluZyYjMzQ7OiYjMzQ7Y2FwYWJpbGl0aWVzPWF1dG8mIzQzO3BpbG90JiMzNDt9LHsmIzM0O25hbWUmIzM0OzomIzM0O0hlbG0gQ2hhcnRzIGluIHRoZSBzdG9yYWdlIGNhdGVnb3J5JiMzNDssJiMzNDtxdWVyeXN0cmluZyYjMzQ7OiYjMzQ7a2luZD0wXHUwMDI2Y2F0ZWdvcnk9NyYjMzQ7fSx7JiMzNDtuYW1lJiMzNDs6JiMzNDtQYWNrYWdlcyB3aXRoIEFwYWNoZS0yLjAgbGljZW5zZSYjMzQ7LCYjMzQ7cXVlcnlzdHJpbmcmIzM0OzomIzM0O2xpY2Vuc2U9QXBhY2hlLTIuMCYjMzQ7fSx7JiMzNDtuYW1lJiMzNDs6JiMzNDtPUEEgcG9saWNpZXMgd2l0aCBNSVQgbGljZW5zZSYjMzQ7LCYjMzQ7cXVlcnlzdHJpbmcmIzM0OzomIzM0O2tpbmQ9Mlx1MDAyNmxpY2Vuc2U9TUlUJiMzNDt9LHsmIzM0O25hbWUmIzM0OzomIzM0O0hlbG0gcGx1Z2lucyYjMzQ7LCYjMzQ7cXVlcnlzdHJpbmcmIzM0OzomIzM0O2tpbmQ9NiYjMzQ7fSx7JiMzNDtuYW1lJiMzNDs6JiMzNDtLdWJlY3RsIHBsdWdpbnMmIzM0OywmIzM0O3F1ZXJ5c3RyaW5nJiMzNDs6JiMzNDtraW5kPTUmIzM0O30seyYjMzQ7bmFtZSYjMzQ7OiYjMzQ7VGVrdG9uIHRhc2tzIGFuZCBwaXBlbGluZXMmIzM0OywmIzM0O3F1ZXJ5c3RyaW5nJiMzNDs6JiMzNDtraW5kPTdcdTAwMjZraW5kPTExJiMzNDt9LHsmIzM0O25hbWUmIzM0OzomIzM0O0dhdGVrZWVwZXIgcG9saWNpZXMmIzM0OywmIzM0O3F1ZXJ5c3RyaW5nJiMzNDs6JiMzNDtraW5kPTE0JiMzNDt9LHsmIzM0O25hbWUmIzM0OzomIzM0O0t1YmV3YXJkZW4gcG9saWNpZXMmIzM0OywmIzM0O3F1ZXJ5c3RyaW5nJiMzNDs6JiMzNDtraW5kPTEzJiMzNDt9LHsmIzM0O25hbWUmIzM0OzomIzM0O0tFREEgc2NhbGVycyYjMzQ7LCYjMzQ7cXVlcnlzdHJpbmcmIzM0OzomIzM0O2tpbmQ9OCYjMzQ7fSx7JiMzNDtuYW1lJiMzNDs6JiMzNDtLZXB0biBpbnRlZ3JhdGlvbnMmIzM0OywmIzM0O3F1ZXJ5c3RyaW5nJiMzNDs6JiMzNDtraW5kPTEwJiMzNDt9XSIvPjxtZXRhIG5hbWU9ImFydGlmYWN0aHViOmFsbG93UHJpdmF0ZVJlcG9zaXRvcmllcyIgY29udGVudD0iZmFsc2UiLz48bWV0YSBuYW1lPSJhcnRpZmFjdGh1YjphbGxvd1VzZXJTaWduVXAiIGNvbnRlbnQ9InRydWUiLz48bWV0YSBuYW1lPSJhcnRpZmFjdGh1YjpnYVRyYWNraW5nSUQiIGNvbnRlbnQ9IiIvPjxtZXRhIG5hbWU9ImFydGlmYWN0aHViOm1vdGQiIGNvbnRlbnQ9IiIvPjxtZXRhIG5hbWU9ImFydGlmYWN0aHViOm1vdGRTZXZlcml0eSIgY29udGVudD0iaW5mbyIvPjxtZXRhIG5hbWU9ImFydGlmYWN0aHViOnJlcG9ydFVSTCIgY29udGVudD0iaHR0cHM6Ly9naXRodWIuY29tL2FydGlmYWN0aHViL2h1Yi9pc3N1ZXMvbmV3P2Fzc2lnbmVlcz0mYW1wO2xhYmVscz1hYnVzZSYjNDM7cmVwb3J0JmFtcDt0ZW1wbGF0ZT1yZXBvcnQtYWJ1c2UubWQmYW1wO3RpdGxlPSU1QkFCVVNFLVJFUE9SVCU1RCYjNDM7UmVwb3NpdG9yeSYjNDM7b3ImIzQzO3BhY2thZ2UmIzQzO25hbWUiLz48bWV0YSBuYW1lPSJhcnRpZmFjdGh1YjpiYW5uZXJzVVJMIiBjb250ZW50PSJodHRwczovL2NuY2YuZ2l0aHViLmlvL2Jhbm5lcnMvYmFubmVycy55bWwiLz48bWV0YSBwcm9wZXJ0eT0ib2c6dHlwZSIgY29udGVudD0id2Vic2l0ZSIvPjxtZXRhIHByb3BlcnR5PSJvZzp0aXRsZSIgY29udGVudD0iQXJ0aWZhY3QgSHViIi8+PG1ldGEgcHJvcGVydHk9Im9nOmRlc2NyaXB0aW9uIiBjb250ZW50PSJGaW5kLCBpbnN0YWxsIGFuZCBwdWJsaXNoIENsb3VkIE5hdGl2ZSBwYWNrYWdlcyIvPjxtZXRhIHByb3BlcnR5PSJvZzppbWFnZSIgY29udGVudD0iaHR0cHM6Ly9hcnRpZmFjdGh1Yi5pby9zdGF0aWMvbWVkaWEvYXJ0aWZhY3RIdWJfdjIucG5nIi8+PG1ldGEgbmFtZT0idHdpdHRlcjpjYXJkIiBjb250ZW50PSJzdW1tYXJ5X2xhcmdlX2ltYWdlIi8+PG1ldGEgbmFtZT0idHdpdHRlcjp0aXRsZSIgY29udGVudD0iQXJ0aWZhY3QgSHViIi8+PG1ldGEgbmFtZT0idHdpdHRlcjpkZXNjcmlwdGlvbiIgY29udGVudD0iRmluZCwgaW5zdGFsbCBhbmQgcHVibGlzaCBDbG91ZCBOYXRpdmUgcGFja2FnZXMiLz48bWV0YSBuYW1lPSJ0d2l0dGVyOmltYWdlOnNyYyIgY29udGVudD0iaHR0cHM6Ly9hcnRpZmFjdGh1Yi5pby9zdGF0aWMvbWVkaWEvYXJ0aWZhY3RIdWJfdjIucG5nIi8+PHNjcmlwdCB0eXBlPSJ0ZXh0L2phdmFzY3JpcHQiIHNyYz0iL3N0YXRpYy9qcy9maXhGaXJlZm94TmlnaHRNb2RlLmpzIiBhc3luYz48L3NjcmlwdD48c2NyaXB0IGRlZmVyPSJkZWZlciIgc3JjPSIvc3RhdGljL2pzL21haW4uZmZiZDY2MTkuanMiPjwvc2NyaXB0PjxsaW5rIGhyZWY9Ii9zdGF0aWMvY3NzL21haW4uNGY3NGZjMjEuY3NzIiByZWw9InN0eWxlc2hlZXQiPjwvaGVhZD48Ym9keT48bm9zY3JpcHQ+WW91IG5lZWQgdG8gZW5hYmxlIEphdmFTY3JpcHQgdG8gcnVuIHRoaXMgYXBwLjwvbm9zY3JpcHQ+PGRpdiBpZD0icm9vdCI+PC9kaXY+PC9ib2R5PjwvaHRtbD4=

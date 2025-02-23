@@ -1,0 +1,25 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: klt
+  namespace: ${releaseNamespace}
+spec:
+  chart:
+    spec:
+      chart: klt
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: lifecycle-toolkit
+        namespace: ${releaseNamespace}
+      version: 0.2.6
+  interval: 1m0s
+  targetNamespace: ${releaseNamespace}
+  releaseName: klt
+  valuesFrom:
+    - kind: ConfigMap
+      name: klt-0.2.6-defaults
+    - kind: ConfigMap
+      name: klt-overrides
+      optional: true

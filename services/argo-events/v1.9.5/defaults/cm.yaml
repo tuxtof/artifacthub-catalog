@@ -1,0 +1,8 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argo-events-2.4.13-defaults
+  namespace: ${releaseNamespace}
+data:
+  values.yaml: |

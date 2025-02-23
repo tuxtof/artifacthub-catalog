@@ -1,0 +1,25 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: alertmanager-snmp-notifier
+  namespace: ${releaseNamespace}
+spec:
+  chart:
+    spec:
+      chart: alertmanager-snmp-notifier
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: prometheus-community
+        namespace: ${releaseNamespace}
+      version: 0.4.0
+  interval: 1m0s
+  targetNamespace: ${releaseNamespace}
+  releaseName: alertmanager-snmp-notifier
+  valuesFrom:
+    - kind: ConfigMap
+      name: alertmanager-snmp-notifier-0.4.0-defaults
+    - kind: ConfigMap
+      name: alertmanager-snmp-notifier-overrides
+      optional: true

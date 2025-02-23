@@ -1,0 +1,8 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: artifact-hub-1.20.0-defaults
+  namespace: ${releaseNamespace}
+data:
+  values.yaml: |

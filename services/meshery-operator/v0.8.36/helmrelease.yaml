@@ -1,0 +1,25 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: meshery-operator
+  namespace: ${releaseNamespace}
+spec:
+  chart:
+    spec:
+      chart: meshery-operator
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: meshery
+        namespace: ${releaseNamespace}
+      version: 0.8.36
+  interval: 1m0s
+  targetNamespace: ${releaseNamespace}
+  releaseName: meshery-operator
+  valuesFrom:
+    - kind: ConfigMap
+      name: meshery-operator-0.8.36-defaults
+    - kind: ConfigMap
+      name: meshery-operator-overrides
+      optional: true

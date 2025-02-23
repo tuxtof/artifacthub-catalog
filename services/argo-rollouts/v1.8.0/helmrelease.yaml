@@ -1,0 +1,25 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: argo-rollouts
+  namespace: ${releaseNamespace}
+spec:
+  chart:
+    spec:
+      chart: argo-rollouts
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: argo
+        namespace: ${releaseNamespace}
+      version: 2.39.0
+  interval: 1m0s
+  targetNamespace: ${releaseNamespace}
+  releaseName: argo-rollouts
+  valuesFrom:
+    - kind: ConfigMap
+      name: argo-rollouts-2.39.0-defaults
+    - kind: ConfigMap
+      name: argo-rollouts-overrides
+      optional: true

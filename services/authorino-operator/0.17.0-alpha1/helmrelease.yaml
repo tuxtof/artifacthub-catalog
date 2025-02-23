@@ -1,0 +1,25 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: authorino-operator
+  namespace: ${releaseNamespace}
+spec:
+  chart:
+    spec:
+      chart: authorino-operator
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: kuadrant
+        namespace: ${releaseNamespace}
+      version: 0.17.0-alpha1
+  interval: 1m0s
+  targetNamespace: ${releaseNamespace}
+  releaseName: authorino-operator
+  valuesFrom:
+    - kind: ConfigMap
+      name: authorino-operator-0.17.0-alpha1-defaults
+    - kind: ConfigMap
+      name: authorino-operator-overrides
+      optional: true

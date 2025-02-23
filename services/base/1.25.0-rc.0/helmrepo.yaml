@@ -1,0 +1,11 @@
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: istio-official
+  namespace: ${releaseNamespace}
+spec:
+  interval: 10m
+  timeout: 1m
+  url: https://istio-release.storage.googleapis.com/charts
+---

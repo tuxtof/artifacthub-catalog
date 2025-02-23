@@ -1,0 +1,25 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: jaeger
+  namespace: ${releaseNamespace}
+spec:
+  chart:
+    spec:
+      chart: jaeger
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: jaegertracing
+        namespace: ${releaseNamespace}
+      version: 3.4.0
+  interval: 1m0s
+  targetNamespace: ${releaseNamespace}
+  releaseName: jaeger
+  valuesFrom:
+    - kind: ConfigMap
+      name: jaeger-3.4.0-defaults
+    - kind: ConfigMap
+      name: jaeger-overrides
+      optional: true

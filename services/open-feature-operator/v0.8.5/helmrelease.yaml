@@ -1,0 +1,25 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: open-feature-operator
+  namespace: ${releaseNamespace}
+spec:
+  chart:
+    spec:
+      chart: open-feature-operator
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: open-feature-operator
+        namespace: ${releaseNamespace}
+      version: 0.8.5
+  interval: 1m0s
+  targetNamespace: ${releaseNamespace}
+  releaseName: open-feature-operator
+  valuesFrom:
+    - kind: ConfigMap
+      name: open-feature-operator-0.8.5-defaults
+    - kind: ConfigMap
+      name: open-feature-operator-overrides
+      optional: true

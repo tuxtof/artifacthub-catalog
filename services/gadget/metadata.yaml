@@ -1,0 +1,86 @@
+displayName: gadget
+description: Gadgets for debugging and introspecting apps
+category:
+- artifact-hub
+type: catalog
+allowMultipleInstances: false
+scope:
+- workspace
+licensing:
+- Ultimate
+- Enterprise
+certifications:
+overview: |
+    # gadget
+    
+    ![Version: 0.37.0](https://img.shields.io/badge/Version-0.37.0-informational?style=flat-square) ![AppVersion: v0.37.0](https://img.shields.io/badge/AppVersion-v0.37.0-informational?style=flat-square)
+    
+    Inspektor Gadget is a collection of tools (or gadgets) to debug and inspect
+    Kubernetes resources and applications. It manages the packaging, deployment and
+    execution of [eBPF](https://ebpf.io/) programs in a Kubernetes cluster,
+    including many based on [BCC](https://github.com/iovisor/bcc) tools, as well as
+    some developed specifically for use in Inspektor Gadget. It automatically maps
+    low-level kernel primitives to high-level Kubernetes resources, making it easier
+    and quicker to find the relevant information.
+    
+    ## The Gadgets
+    
+    Inspektor Gadget tools are known as gadgets. You can deploy one, two or many gadgets.
+    
+    ![different tools offered by Inspektor Gadget](https://raw.githubusercontent.com/inspektor-gadget/inspektor-gadget/main/docs/images/architecture/inspektor_gadget_tools.svg)
+    
+    ## Getting Started
+    
+    ```
+    $ helm repo add gadget https://inspektor-gadget.github.io/charts
+    $ helm install gadget gadget/gadget --namespace=gadget --create-namespace
+    ```
+    
+    ## Maintainers
+    
+    | Name | Email | Url |
+    | ---- | ------ | --- |
+    | Inspektor Gadget Team |  | <https://www.inspektor-gadget.io> |
+    
+    ## Source Code
+    
+    * <https://github.com/inspektor-gadget/inspektor-gadget>
+    
+    ## Getting Help
+    
+    In case you encounter any problems while using Inspektor Gadget, feel free to
+    open an issue in the [Inspektor Gadget GitHub repository](https://github.com/inspektor-gadget/inspektor-gadget) or reach out to use at
+    [Inspektor Gadget Slack channel](https://kubernetes.slack.com/messages/inspektor-gadget/).
+    
+    ## Values
+    
+    | Key | Type | Default | Description |
+    |-----|------|---------|-------------|
+    | config.hookMode | string | `"auto"` | How to get containers start/stop notifications (auto, crio, podinformer, nri, fanotify+ebpf") |
+    | config.fallbackPodInformer | bool | `true` | Whether to use the fallback pod informer |
+    | config.containerdSocketPath | string | `"/run/containerd/containerd.sock"` | Containerd CRI Unix socket path |
+    | config.crioSocketPath | string | `"/run/crio/crio.sock"` | CRI-O CRI Unix socket path |
+    | config.dockerSocketPath | string | `"/run/docker.sock"` | Docker Engine API Unix socket path |
+    | config.podmanSocketPath | string | `"/run/podman/podman.sock"` | Podman API Unix socket path |
+    | config.experimental | bool | `false` | Enable experimental features |
+    | config.eventsBufferLength | string | `"16384"` | Events buffer length. A low value could impact horizontal scaling. |
+    | config.daemonLogLevel | string | `"info"` | Daemon Log Level. Valid values are: "trace", "debug", "info", "warning", "error", "fatal", "panic" |
+    | config.verifyGadgets | bool | `true` | Verify image-based gadgets |
+    | config.gadgetsPublicKeys | list | `["-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEoDOC0gYSxZTopenGmX3ZFvQ1DSfh\nIr4EKRt5jC+mXaJ7c7J+oREskYMn/SfZdRHNSOjLTZUMDm60zpXGhkFecg==\n-----END PUBLIC KEY-----\n"]` | Public keys used to verify image-based gadgets |
+    | config.allowedGadgets | list | `[]` | List of allowed gadgets. |
+    | config.disallowGadgetsPulling | bool | `false` | Disallow pulling gadgets. |
+    | config.mountPullSecret | bool | `false` | Mount pull secret (gadget-pull-secret) to pull image-based gadgets from private registry |
+    | config.appArmorProfile | string | `"unconfined"` | Set AppArmor profile. |
+    | config.otelMetricsListen | bool | `false` | Enable OpenTelemetry metrics listener |
+    | config.otelMetricsAddress | string | `"0.0.0.0:2224"` | Address to listen for OpenTelemetry metrics |
+    | image.repository | string | `"ghcr.io/inspektor-gadget/inspektor-gadget"` | Container repository for the container image |
+    | image.pullPolicy | string | `"Always"` | Pull policy for the container image |
+    | image.tag | string | `""` | Tag for the container image |
+    | nodeSelector | object | `{"kubernetes.io/os":"linux"}` | Node selector used by `gadget` container |
+    | affinity | object | `{}` | Affinity used by `gadget` container |
+    | capabilities | object | `{}` | Capabilities used by `gadget` container |
+    | tolerations | object | `{}` | Tolerations used by `gadget` container |
+    | skipLabels | bool | `true` | Skip Helm labels |
+    | additionalLabels | object | `{"labels":{}}` | Labels to be added to all other resources. |
+    
+icon: PHN2ZyB3aWR0aD0iMTE5IiBoZWlnaHQ9IjExMCIgdmlld0JveD0iMCAwIDExOSAxMTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxwYXRoIGQ9Ik0wIDg1LjU1NTZWNjcuMjIyMkgzLjY2NjY3Vjg1LjU1NTZIMFoiIGZpbGw9IiNGNzJFNUMiLz4KPHBhdGggZD0iTTE0LjI5OTkgODUuNTU1NlY3MC44ODg5SDEwLjYzMzNWODUuNTU1Nkg2Ljk2NjYxVjY3LjIyMjJIMTcuOTY2NlY4NS41NTU2SDE0LjI5OTlaIiBmaWxsPSIjRjcyRTVDIi8+CjxwYXRoIGQ9Ik0yNC45MzM0IDc0LjU1NTZIMjEuMjY2N1Y2Ny4yMjIySDMyLjI2NjdWNzAuODg4OUgyNC45MzM0Vjc0LjU1NTZaTTIxLjI2NjcgODUuNTU1NlY4MS44ODg5SDI4LjZWNzguMjIyMkgzMi4yNjY3Vjg1LjU1NTZIMjEuMjY2N1pNMjguNiA3OC4yMjIySDI0LjkzMzRWNzQuNTU1NkgyOC42Vjc4LjIyMjJaIiBmaWxsPSIjRjcyRTVDIi8+CjxwYXRoIGQ9Ik0zNS41NjY3IDg1LjU1NTZWNjcuMjIyMkg0Ni41NjY3Vjc4LjIyMjJIMzkuMjMzM1Y4NS41NTU2SDM1LjU2NjdaTTQyLjkgNzQuNTU1NlY3MC44ODg5SDM5LjIzMzNWNzQuNTU1Nkg0Mi45WiIgZmlsbD0iI0Y3MkU1QyIvPgo8cGF0aCBkPSJNNDkuODY2NyA4NS41NTU2VjY3LjIyMjJINjAuODY2N1Y3MC44ODg5SDUzLjUzMzNWNzQuNTU1Nkg2MC44NjY3Vjc4LjIyMjJINTMuNTMzM1Y4MS44ODg5SDYwLjg2NjdWODUuNTU1Nkg0OS44NjY3WiIgZmlsbD0iI0Y3MkU1QyIvPgo8cGF0aCBkPSJNNjQuMTY2NyA4NS41NTU2VjY3LjIyMjJINjcuODMzM1Y3NC41NTU2SDcxLjVWNzguMjIyMkg2Ny44MzMzVjg1LjU1NTZINjQuMTY2N1pNNzEuNSA3NC41NTU2VjY3LjIyMjJINzUuMTY2N1Y3NC41NTU2SDcxLjVaTTcxLjUgODUuNTU1NlY3OC4yMjIySDc1LjE2NjdWODUuNTU1Nkg3MS41WiIgZmlsbD0iI0Y3MkU1QyIvPgo8cGF0aCBkPSJNODIuMTMzMyA4NS41NTU2VjcwLjg4ODlINzguNDY2N1Y2Ny4yMjIySDg5LjQ2NjdWNzAuODg4OUg4NS44Vjg1LjU1NTZIODIuMTMzM1oiIGZpbGw9IiNGNzJFNUMiLz4KPHBhdGggZD0iTTkyLjc2NjcgODUuNTU1NlY2Ny4yMjIySDEwMy43NjdWODUuNTU1Nkg5Mi43NjY3Wk0xMDAuMSA4MS44ODg5VjcwLjg4ODlIOTYuNDMzM1Y4MS44ODg5SDEwMC4xWiIgZmlsbD0iI0Y3MkU1QyIvPgo8cGF0aCBkPSJNMTA3LjA2NyA4NS41NTU2VjY3LjIyMjJIMTE4LjA2N1Y3OC4yMjIySDExNC40VjgxLjg4ODlIMTEwLjczM1Y4NS41NTU2SDEwNy4wNjdaTTExNC40IDc0LjU1NTZWNzAuODg4OUgxMTAuNzMzVjc0LjU1NTZIMTE0LjRaTTExNC40IDg1LjU1NTZWODEuODg4OUgxMTguMDY3Vjg1LjU1NTZIMTE0LjRaIiBmaWxsPSIjRjcyRTVDIi8+CjxwYXRoIGQ9Ik0xNy43ODM0IDExMFY5MS42NjY3SDI4Ljc4MzRWOTUuMzMzM0gyMS40NTAxVjk5SDI4Ljc4MzRWMTEwSDE3Ljc4MzRaTTI1LjExNjcgMTA2LjMzM1YxMDIuNjY3SDIxLjQ1MDFWMTA2LjMzM0gyNS4xMTY3WiIgZmlsbD0iI0Y3MkU1QyIvPgo8cGF0aCBkPSJNMzkuNDE2NyAxMTBWMTAyLjY2N0gzNS43NVYxMTBIMzIuMDgzM1Y5MS42NjY3SDQzLjA4MzNWMTEwSDM5LjQxNjdaTTM5LjQxNjcgOTlWOTUuMzMzM0gzNS43NVY5OUgzOS40MTY3WiIgZmlsbD0iI0Y3MkU1QyIvPgo8cGF0aCBkPSJNNDYuMzgzMyAxMTBWOTEuNjY2N0g1My43MTY3Vjk1LjMzMzNINTcuMzgzM1YxMDYuMzMzSDUzLjcxNjdWOTUuMzMzM0g1MC4wNVYxMDYuMzMzSDUzLjcxNjdWMTEwSDQ2LjM4MzNaIiBmaWxsPSIjRjcyRTVDIi8+CjxwYXRoIGQ9Ik02MC42ODMzIDExMFY5MS42NjY3SDcxLjY4MzNWOTUuMzMzM0g2NC4zNVY5OUg3MS42ODMzVjExMEg2MC42ODMzWk02OC4wMTY3IDEwNi4zMzNWMTAyLjY2N0g2NC4zNVYxMDYuMzMzSDY4LjAxNjdaIiBmaWxsPSIjRjcyRTVDIi8+CjxwYXRoIGQ9Ik03NC45ODMzIDExMFY5MS42NjY3SDg1Ljk4MzNWOTUuMzMzM0g3OC42NVY5OUg4NS45ODMzVjEwMi42NjdINzguNjVWMTA2LjMzM0g4NS45ODMzVjExMEg3NC45ODMzWiIgZmlsbD0iI0Y3MkU1QyIvPgo8cGF0aCBkPSJNOTIuOTUgMTEwVjk1LjMzMzNIODkuMjgzM1Y5MS42NjY3SDEwMC4yODNWOTUuMzMzM0g5Ni42MTY3VjExMEg5Mi45NVoiIGZpbGw9IiNGNzJFNUMiLz4KPHBhdGggZD0iTTc4LjEgMEw3My4xODA2IDEuMzQ0NDRMNjQuOSAzLjU3NUw1OS41MjIyIDUuMDQxNjdMNTMuMTk3MiA2Ljc4MzMzTDM0LjQ5NzIgMTEuODI1TDMxLjUwMjggMjMuNjE5NEwzOS4xNzIyIDMxLjI4ODlMNDQuOTc3OCAzNy4xMjVMNTAuNDc3OCAzMS41NjM5TDUwLjQ0NzIgMjQuNTA1Nkw2MS4zNTU2IDEzLjU5NzJMNjMuNDYzOSAxNS42NzVMNjIuNjA4MyAyMS41MTExTDY1LjcyNSAyNC42Mjc4TDcxLjU2MTEgMjMuNzcyMkw3My42Mzg5IDI1Ljg4MDZMNjIuNzMwNiAzNi43NTgzTDU1LjY0MTcgMzYuNzI3OEw1MC4xNDE3IDQyLjIyNzhMNTQuNjAyOCA0Ni43MTk0TDYyLjk3NSA1NS4wOTE3TDc0LjgzMDYgNTIuMjE5NEw3Ni4yOTcyIDQ2LjcxOTRMNzguMDY5NSA0MC4xODA2TDgxLjkxOTUgMjUuNzg4OUw4My42MzA2IDE5LjQ2MzlMODYuNTYzOSA4LjU1NTU2TDc4LjEgMFoiIGZpbGw9IiNGNzJFNUMiLz4KPC9zdmc+Cg==

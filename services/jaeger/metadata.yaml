@@ -1,0 +1,467 @@
+displayName: jaeger
+description: A Jaeger Helm chart for Kubernetes
+category:
+- artifact-hub
+type: catalog
+allowMultipleInstances: false
+scope:
+- workspace
+licensing:
+- Ultimate
+- Enterprise
+certifications:
+overview: |
+    # Jaeger
+    
+    [Jaeger](https://www.jaegertracing.io/) is a distributed tracing system.
+    
+    ## Introduction
+    
+    This chart adds all components required to run Jaeger as described in the [jaeger-kubernetes](https://github.com/jaegertracing/jaeger-kubernetes) GitHub page for a production-like deployment. The chart default will deploy a new Cassandra cluster (using the [cassandra chart](https://github.com/kubernetes/charts/tree/master/incubator/cassandra)), but also supports using an existing Cassandra cluster, deploying a new ElasticSearch cluster (using the [elasticsearch chart](https://github.com/elastic/helm-charts/tree/master/elasticsearch)), or connecting to an existing ElasticSearch cluster. Once the storage backend is available, the chart will deploy jaeger-agent as a DaemonSet and deploy the jaeger-collector and jaeger-query components as Deployments.
+    
+    ## Installing the Chart
+    
+    Add the Jaeger Tracing Helm repository:
+    
+    ```bash
+    helm repo add jaegertracing https://jaegertracing.github.io/helm-charts
+    ```
+    
+    To install a release named `jaeger`:
+    
+    ```bash
+    helm install jaeger jaegertracing/jaeger
+    ```
+    
+    By default, the chart deploys the following:
+    
+    - Jaeger Agent DaemonSet
+    - Jaeger Collector Deployment
+    - Jaeger Query (UI) Deployment
+    - Cassandra StatefulSet (subject to change!)
+    
+    ![Jaeger with Default
+    components](https://www.jaegertracing.io/img/architecture-v1.png)
+    
+    ## Configuration
+    
+    See [Customizing the Chart Before Installing](https://helm.sh/docs/intro/using_helm/#customizing-the-chart-before-installing). To see all configurable options with detailed comments, visit the chart's [values.yaml](https://github.com/jaegertracing/helm-charts/blob/master/charts/jaeger/values.yaml), or run these configuration commands:
+    
+    ```console
+    $ helm show values jaegertracing/jaeger
+    ```
+    
+    You may also `helm show values` on this chart's [dependencies](#dependencies) for additional options.
+    
+    ### Dependencies
+    
+    If installing with a dependency such as Cassandra, Elasticsearch and/or Kafka
+    their, values can be shown by running:
+    
+    ```console
+    helm repo add elastic https://helm.elastic.co
+    helm show values elastic/elasticsearch
+    ```
+    
+    ```console
+    helm repo add incubator https://kubernetes-charts-incubator.storage.googleapis.com/
+    helm show values incubator/cassandra
+    ```
+    
+    ```console
+    helm repo add bitnami https://charts.bitnami.com/bitnami
+    helm show values bitnami/kafka
+    ```
+    
+    Please note, any dependency values must be nested within the key named after the
+    chart, i.e. `elasticsearch`, `cassandra` and/or `kafka`.
+    
+    ## Storage
+    
+    As per Jaeger documentation, for large scale production deployment the Jaeger
+    team [recommends Elasticsearch backend over Cassandra](https://www.jaegertracing.io/docs/latest/faq/#what-is-the-recommended-storage-backend),
+    as such the default backend may change in the future and **it is highly
+    recommended to explicitly configure storage**.
+    
+    If you are just starting out with a testing/demo setup, you can also use in-memory storage for a
+    fast and easy setup experience using the [Jaeger All in One executable](https://www.jaegertracing.io/docs/1.29/getting-started/#all-in-one).
+    
+    ### Elasticsearch configuration
+    
+    #### Elasticsearch Rollover
+    
+    If using the [Elasticsearch
+    Rollover](https://www.jaegertracing.io/docs/latest/deployment/#elasticsearch-rollover)
+    feature, elasticsearch must already be present and so must be deployed
+    separately from this chart, if not the rollover init hook won't be able to
+    complete successfully.
+    
+    #### Installing the Chart using a New ElasticSearch Cluster
+    
+    To install the chart with the release name `jaeger` using a new ElasticSearch cluster instead of Cassandra (default), run the following command:
+    
+    ```console
+    helm install jaeger jaegertracing/jaeger \
+      --set provisionDataStore.cassandra=false \
+      --set provisionDataStore.elasticsearch=true \
+      --set storage.type=elasticsearch
+    ```
+    
+    #### Installing the Chart using an Existing Elasticsearch Cluster
+    
+    A release can be configured as follows to use an existing ElasticSearch cluster as it as the storage backend:
+    
+    ```console
+    helm install jaeger jaegertracing/jaeger \
+      --set provisionDataStore.cassandra=false \
+      --set storage.type=elasticsearch \
+      --set storage.elasticsearch.host=<HOST> \
+      --set storage.elasticsearch.port=<PORT> \
+      --set storage.elasticsearch.user=<USER> \
+      --set storage.elasticsearch.password=<password>
+    ```
+    
+    #### Installing the Chart using an Existing ElasticSearch Cluster with TLS
+    
+    If you already have an existing running ElasticSearch cluster with TLS, you can configure the chart as follows to use it as your backing store:
+    
+    Content of the `jaeger-values.yaml` file:
+    
+    ```YAML
+    storage:
+      type: elasticsearch
+      elasticsearch:
+        host: <HOST>
+        port: <PORT>
+        scheme: https
+        user: <USER>
+        password: <PASSWORD>
+    provisionDataStore:
+      cassandra: false
+      elasticsearch: false
+    query:
+      cmdlineParams:
+        es.tls.ca: "/tls/es.pem"
+      extraConfigmapMounts:
+        - name: jaeger-tls
+          mountPath: /tls
+          subPath: ""
+          configMap: jaeger-tls
+          readOnly: true
+    collector:
+      cmdlineParams:
+        es.tls.ca: "/tls/es.pem"
+      extraConfigmapMounts:
+        - name: jaeger-tls
+          mountPath: /tls
+          subPath: ""
+          configMap: jaeger-tls
+          readOnly: true
+    spark:
+      enabled: true
+      cmdlineParams:
+        java.opts: "-Djavax.net.ssl.trustStore=/tls/trust.store -Djavax.net.ssl.trustStorePassword=changeit"
+      extraConfigmapMounts:
+        - name: jaeger-tls
+          mountPath: /tls
+          subPath: ""
+          configMap: jaeger-tls
+          readOnly: true
+    
+    ```
+    
+    Generate configmap jaeger-tls:
+    
+    ```console
+    keytool -import -trustcacerts -keystore trust.store -storepass changeit -alias es-root -file es.pem
+    kubectl create configmap jaeger-tls --from-file=trust.store --from-file=es.pem
+    ```
+    
+    ```console
+    helm install jaeger jaegertracing/jaeger --values jaeger-values.yaml
+    ```
+    
+    ### Cassandra configuration
+    
+    #### Installing the Chart using an Existing Cassandra Cluster
+    
+    If you already have an existing running Cassandra cluster, you can configure the chart as follows to use it as your backing store (make sure you replace `<HOST>`, `<PORT>`, etc with your values):
+    
+    ```console
+    helm install jaeger jaegertracing/jaeger \
+      --set provisionDataStore.cassandra=false \
+      --set storage.cassandra.host=<HOST> \
+      --set storage.cassandra.port=<PORT> \
+      --set storage.cassandra.user=<USER> \
+      --set storage.cassandra.password=<PASSWORD>
+    ```
+    
+    #### Installing the Chart using an Existing Cassandra Cluster with TLS
+    
+    If you already have an existing running Cassandra cluster with TLS, you can configure the chart as follows to use it as your backing store:
+    
+    Content of the `values.yaml` file:
+    
+    ```YAML
+    storage:
+      type: cassandra
+      cassandra:
+        host: <HOST>
+        port: <PORT>
+        user: <USER>
+        password: <PASSWORD>
+        tls:
+          enabled: true
+          secretName: cassandra-tls-secret
+    
+    provisionDataStore:
+      cassandra: false
+    ```
+    
+    Content of the `jaeger-tls-cassandra-secret.yaml` file:
+    
+    ```YAML
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      name: cassandra-tls-secret
+    data:
+      commonName: <SERVER NAME>
+      ca-cert.pem: |
+        -----BEGIN CERTIFICATE-----
+        <CERT>
+        -----END CERTIFICATE-----
+      client-cert.pem: |
+        -----BEGIN CERTIFICATE-----
+        <CERT>
+        -----END CERTIFICATE-----
+      client-key.pem: |
+        -----BEGIN RSA PRIVATE KEY-----
+        -----END RSA PRIVATE KEY-----
+      cqlshrc: |
+        [ssl]
+        certfile = ~/.cassandra/ca-cert.pem
+        userkey = ~/.cassandra/client-key.pem
+        usercert = ~/.cassandra/client-cert.pem
+    
+    ```
+    
+    ```console
+    kubectl apply -f jaeger-tls-cassandra-secret.yaml
+    helm install jaeger jaegertracing/jaeger --values values.yaml
+    ```
+    
+    ### Ingester Configuration
+    
+    #### Installing the Chart with Ingester enabled
+    
+    The architecture illustrated below can be achieved by enabling the ingester component. When enabled, Cassandra or Elasticsearch (depending on the configured values) now becomes the ingester's storage backend, whereas Kafka becomes the storage backend of the collector service.
+    
+    ![Jaeger with Ingester](https://www.jaegertracing.io/img/architecture-v2.png)
+    
+    #### Installing the Chart with Ingester enabled using a New Kafka Cluster
+    
+    To provision a new Kafka cluster along with jaeger-ingester:
+    
+    ```console
+    helm install jaeger jaegertracing/jaeger \
+      --set provisionDataStore.kafka=true \
+      --set ingester.enabled=true
+    ```
+    
+    #### Installing the Chart with Ingester using an existing Kafka Cluster
+    
+    You can use an existing Kafka cluster with jaeger too
+    
+    ```console
+    helm install jaeger jaegertracing/jaeger \
+      --set ingester.enabled=true \
+      --set storage.kafka.brokers={<BROKER1:PORT>,<BROKER2:PORT>} \
+      --set storage.kafka.topic=<TOPIC>
+    ```
+    
+    ### Other Storage Configuration
+    
+    If you are using grpc-plugin based storage, you can set environment
+    variables that are needed by the plugin.
+    
+    As as example if using the [jaeger-mongodb](https://github.com/mongodb-labs/jaeger-mongodb)
+    plugin you can set the `MONGO_URL` as follows...
+    
+    ```YAML
+    storage:
+      type: grpc-plugin
+      grpcPlugin:
+        extraEnv:
+          - name: MONGO_URL
+            valueFrom:
+              secretKeyRef:
+                key: MONGO_URL
+                name: jaeger-secrets
+    ```
+    
+    ### All in One In-Memory Configuration
+    
+    #### Installing the Chart using the All in One executable and in-memory storage
+    
+    To install the chart with the release name `jaeger` using in-memory storage and the All in One
+    executable, configure the chart as follows:
+    
+    Content of the `values.yaml` file:
+    
+    ```yaml
+    provisionDataStore:
+      cassandra: false
+    allInOne:
+      enabled: true
+    storage:
+      type: memory
+    agent:
+      enabled: false
+    collector:
+      enabled: false
+    query:
+      enabled: false
+    ```
+    
+    It's possible to specify resources, extra environment variables, and extra secrets for the all in one deployment:
+    
+    ```yaml
+    allInOne:
+      extraEnv:
+        - name: QUERY_BASE_PATH
+          value: /jaeger
+      resources:
+        limits:
+          cpu: 500m
+          memory: 512Mi
+        requests:
+          cpu: 256m
+          memory: 128Mi
+      extraSecretMounts:
+        - name: jaeger-tls
+          mountPath: /tls
+          subPath: ""
+          secretName: jaeger-tls
+          readOnly: true
+    ```
+    
+    ```bash
+    helm install jaeger jaegertracing/jaeger --values values.yaml
+    ```
+    
+    ## oAuth2 Sidecar
+    If extra protection of the Jaeger UI is needed, then the oAuth2 sidecar can be enabled in the Jaeger Query. The oAuth2
+    sidecar acts as a security proxy in front of the Jaeger Query service and enforces user authentication before reaching
+    the Jaeger UI. This method can work with any valid provider including Keycloak, Azure, Google, GitHub, and more.
+    
+    Offical docs [here](https://oauth2-proxy.github.io/oauth2-proxy/docs/behaviour)
+    
+    Content of the `jaeger-values.yaml` file:
+    
+    ```YAML
+    query:
+      enabled: true
+      oAuthSidecar:
+        enabled: true
+        resources: {}
+        image:
+          registry: quay.io
+          repository: oauth2-proxy/oauth2-proxy
+          tag: v7.6.0
+        pullPolicy: IfNotPresent
+        containerPort: 4180
+        args:
+          - --config
+          - /etc/oauth2-proxy/oauth2-proxy.cfg
+          - --client-secret
+          - "$(client-secret)"
+        extraEnv:
+          - name: client-secret
+            valueFrom:
+              secretKeyRef:
+                name: client-secret
+                key: client-secret-key
+        extraConfigmapMounts: []
+        extraSecretMounts: []
+        config: |-
+          provider = "oidc"
+          https_address = ":4180"
+          upstreams = ["http://localhost:16686"]
+          redirect_url = "https://jaeger-svc-domain/oauth2/callback"
+          client_id = "jaeger-query"
+          oidc_issuer_url = "https://keycloak-svc-domain/auth/realms/Default"
+          cookie_secure = "true"
+          cookie_secret = ""
+          email_domains = "*"
+          oidc_groups_claim = "groups"
+          user_id_claim = "preferred_username"
+          skip_provider_button = "true"
+    ```
+    
+    ## Installing extra kubernetes objects
+    
+    If additional kubernetes objects need to be installed alongside this chart, set the `extraObjects` array to contain
+    the yaml describing these objects. The values in the array are treated as a template to allow the use of variable
+    substitution and function calls as in the example below.
+    
+    Content of the `jaeger-values.yaml` file:
+    
+    ```YAML
+    extraObjects:
+      - apiVersion: rbac.authorization.k8s.io/v1
+        kind: RoleBinding
+        metadata:
+          name: "{{ .Release.Name }}-someRoleBinding"
+        roleRef:
+          apiGroup: rbac.authorization.k8s.io
+          kind: Role
+          name: someRole
+        subjects:
+          - kind: ServiceAccount
+            name: "{{ include \"jaeger.esLookback.serviceAccountName\" . }}"
+    ```
+    
+    ## Configuring the hotrod example application to send traces to the OpenTelemetry collector
+    
+    If the `hotrod` example application is enabled it will export traces to Jaeger
+    via the Jaeger exporter. To switch this to another collector and/or protocol,
+    such as an OpenTelemetry OTLP Collector, see the example below.
+    
+    The primary use case of sending the traces to the collector instead of directly
+    to Jaeger is to verify traces can get back to Jaeger or another distributed
+    tracing store and verify that pipeline with the pre-instrumented hotrod
+    application.
+    
+    **NOTE: This will not install or setup the OpenTelemetry collector. To setup an example OpenTelemetry Collector, see the [OpenTelemetry helm
+    charts](https://github.com/open-telemetry/opentelemetry-helm-charts/tree/main/charts/opentelemetry-collector).**
+    
+    Content of the `jaeger-values.yaml` file:
+    
+    ```YAML
+    hotrod:
+      enabled: true
+      # Switch from the jaeger protocol to OTLP
+      extraArgs:
+        - --otel-exporter=otlp
+      # Set the address of the OpenTelemetry collector endpoint
+      extraEnv:
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: http://my-otel-collector-opentelemetry-collector:4318
+    ```
+    
+    ## Updating to Kafka to Kraft Mode
+    
+    In the Kafka Helm Chart version 24.0.0 major refactors were done to support Kraft mode. More information can be found [here](https://github.com/bitnami/charts/tree/main/bitnami/kafka#to-2400).
+    
+    #### Upgrading from Kraft mode
+    
+    If you are upgrading from Kraft mode, follow the instructions [here](https://github.com/bitnami/charts/tree/main/bitnami/kafka#upgrading-from-zookeeper-mode).
+    
+    #### Upgrading from Zookeeper mode
+    
+    If you are upgrading from Zookeeper mode, follow the instructions [here](https://github.com/bitnami/charts/tree/main/bitnami/kafka#upgrading-from-zookeeper-mode).
+    
+    After you complete the steps above, follow the instructions [here](https://github.com/bitnami/charts/tree/main/bitnami/kafka#migrating-from-zookeeper-early-access) to finally migrate from Zookeeper.
+    
+icon: PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDIxLjEuMCwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPgo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IgoJIHZpZXdCb3g9IjAgMCA1MDQgNTA0IiBzdHlsZT0iZW5hYmxlLWJhY2tncm91bmQ6bmV3IDAgMCA1MDQgNTA0OyIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+CjxzdHlsZSB0eXBlPSJ0ZXh0L2NzcyI+Cgkuc3Qwe2ZpbGw6bm9uZTt9Cgkuc3Qxe2ZpbGw6IzY3Q0ZFMzt9Cgkuc3Qye2ZpbGw6I0ZGRkZGRjt9Cgkuc3Qze2ZpbGw6I0RGQ0FBMzt9Cgkuc3Q0e2ZpbGw6IzIzMUYyMDt9Cgkuc3Q1e2ZpbGw6IzY0OEMxQTt9Cjwvc3R5bGU+CjxnPgoJPGc+CgkJPHBhdGggY2xhc3M9InN0MCIgZD0iTTI5OC4zLDIwMi45Yy02LjMtMy44LTEzLjctNi0yMS42LTZjLTIyLjksMC00MS41LDE4LjYtNDEuNSw0MS41YzAsMTUsOCwyOC4yLDIwLDM1LjVjNi4zLDMuOCwxMy42LDYsMjEuNSw2CgkJCWMyMi45LDAsNDEuNS0xOC42LDQxLjUtNDEuNUMzMTguMiwyMjMuNCwzMTAuMiwyMTAuMiwyOTguMywyMDIuOXoiLz4KCQk8cGF0aCBjbGFzcz0ic3QwIiBkPSJNMTg5LjYsMjY4LjNjMC0xNS04LTI4LjItMTkuOS0zNS40Yy02LjMtMy44LTEzLjctNi0yMS42LTZjLTIyLjksMC00MS41LDE4LjYtNDEuNSw0MS41YzAsMTUsOCwyOC4yLDIwLDM1LjUKCQkJYzYuMywzLjgsMTMuNiw2LDIxLjUsNkMxNzEsMzA5LjgsMTg5LjYsMjkxLjIsMTg5LjYsMjY4LjN6Ii8+CgkJPHBhdGggY2xhc3M9InN0MSIgZD0iTTIwMy42LDM0OS42YzIuNCw0LjYsNS42LDguNSw5LjUsOC41YzAuOCwwLDEuNi0wLjIsMi41LTAuNWM0LTEuNiw0LjItOC42LDMuMi0xNS4zCgkJCUMyMTMsMzQ0LjIsMjA4LDM0NywyMDMuNiwzNDkuNnoiLz4KCQk8cGF0aCBjbGFzcz0ic3QxIiBkPSJNNDAyLDM3Mi4zYzAtMC4xLDAtMC4yLDAtMC4yYy0xLjctMTIuMi02LjktMTcuNy0xMS41LTIyLjVjLTQuMy00LjUtOC4zLTguOC03LTE2LjYKCQkJYzEuMi03LjIsNi45LTExLjcsMTYuMy0xMi44Yy01LjctMzguNS0xNC04Ny4xLTI0LjgtMTI4LjVjLTUuNC0yMC43LTEzLjgtMzUuMS0yNS4yLTQ0LjZjLTEzLDYuNy0yOC42LDE0LTQ2LjEsMjEuNQoJCQljLTEyLjYsNS41LTI1LjYsMTAuOC0zOCwxNS43Yy0xMCwxMC43LTIwLjksMjEuMi0yNy41LDI0LjNjLTQuOCwyLjEtOSwzLTEyLjcsM2MtOCwwLTEzLjMtNC0xNS45LTcuNWMtMywwLjgtNS40LDEuMy03LjEsMS41CgkJCWMtMiwwLjItNC44LDAuNS04LjQsMC43YzEuNCwzLjYsMC44LDcuOS0xLjgsMTEuMWMtMi45LDMuNS03LjYsNS4zLTE0LjMsNS4zYy05LjYsMC0yMy4zLTMuNy00MS42LTExLjFjLTIuNy0xLjEtNS4yLTIuMS03LjQtMi45CgkJCWMtMS40LDAtMi44LDAtNC4yLDBjMCwwLDAsMCwwLDBjLTE3LjUsMC0zMS4xLTAuNS00MS44LTEuNGMtMTEuNywyNC4zLTYuNiw1MS4yLTIuMyw3My40YzQuMSwyMS4zLDE4LjQsNTkuMiwzMS42LDkxLjgKCQkJYzQuOSwxMi4xLDkuNywyMy40LDEzLjcsMzIuOWMzNS44LDMuMiw4MS44LDUuMSwxMzEuOSw1LjFjNTkuNiwwLDExMy4zLTIuNywxNTEuMS03QzQwNiwzOTIuMSw0MDIuNiwzNzYuMyw0MDIsMzcyLjN6CgkJCSBNMTI2LjYsMzAzLjhjLTEyLTcuMy0yMC0yMC40LTIwLTM1LjVjMC0yMi45LDE4LjYtNDEuNSw0MS41LTQxLjVjNy45LDAsMTUuMywyLjIsMjEuNiw2YzExLjksNy4zLDE5LjksMjAuNCwxOS45LDM1LjQKCQkJYzAsMjIuOS0xOC42LDQxLjUtNDEuNSw0MS41QzE0MC4zLDMwOS44LDEzMi45LDMwNy42LDEyNi42LDMwMy44eiBNMjcxLjIsMzM4Yy00LjMsMS45LTEwLjUsMi43LTIwLjQsMi44YzAsMC45LDAuMSwxLjcsMC4xLDIuMwoJCQljMC40LDUuNy0wLjksMTAuMi00LDEzLjVjLTIuOCwzLTYuOCw0LjYtMTEuMyw0LjZjLTIsMC00LjEtMC4zLTUuNy0wLjljLTEuOC0wLjctMy4zLTEuOC00LjctMy42Yy0xLjMsMy43LTMuNiw2LjMtNi45LDcuNwoJCQljLTEuNywwLjctMy40LDEuMS01LjIsMS4xYy02LjEsMC0xMS40LTQuMi0xNS43LTEyLjFjLTAuNiwwLjMtMS4yLDAuNy0xLjcsMWMtMywxLjYtNi42LDIuNC0xMC40LDIuNGMtNy4zLDAtMTQuMS0yLjgtMTguMi03LjYKCQkJYy0zLjQtMy45LTQuOC04LjktNC4xLTE0LjFjMi4yLTE1LjksMjMuMi0yMi4zLDI1LjYtMjNsNC45LTEuNGwzLjMsMy45YzAuNCwwLjUsMi44LDIuOCwxMS44LDIuOGMzLjQsMCw3LjMtMC4zLDExLjctMQoJCQljMTQuNC0yLjMsMTkuOS0xMy44LDIwLjMtMTQuNWwyLTQuN2w1LjIsMGMzMS4yLDAuMywzNiwxNCwzNi44LDE4LjJDMjg2LDMyNS4yLDI4MS4xLDMzMy43LDI3MS4yLDMzOHogTTI3Ni43LDI3OS45CgkJCWMtNy45LDAtMTUuMi0yLjItMjEuNS02Yy0xMi03LjMtMjAtMjAuNC0yMC0zNS41YzAtMjIuOSwxOC42LTQxLjUsNDEuNS00MS41YzcuOSwwLDE1LjMsMi4yLDIxLjYsNmMxMS45LDcuMywxOS45LDIwLjQsMTkuOSwzNS40CgkJCUMzMTguMiwyNjEuMywyOTkuNiwyNzkuOSwyNzYuNywyNzkuOXoiLz4KCQk8cGF0aCBjbGFzcz0ic3QxIiBkPSJNMjQ3LjUsMzA1YzAsMC03LDE2LTI2LjIsMTljLTUsMC44LTkuMywxLjEtMTIuOSwxLjFjLTEwLjMsMC0xNS4zLTIuNy0xNy44LTUuNmMwLDAtMTguNCw1LjMtMjAsMTYuNgoJCQljLTEuMiw4LjUsNy4yLDEyLjgsMTQuNiwxMi44YzIuNSwwLDQuOS0wLjUsNi43LTEuNWM3LjQtNCwxOC40LTEyLjYsMzMuMi0xNC41YzEuMy0wLjIsMy4yLTAuMiw1LjQtMC4yYzUsMCwxMS45LDAuMywxOC42LDAuMwoJCQljNy42LDAsMTQuOS0wLjQsMTguOS0yLjJjOS4xLTQsOS4xLTEwLjcsOC41LTE0LjFDMjc1LjksMzEyLjksMjcwLjQsMzA1LjIsMjQ3LjUsMzA1eiIvPgoJCTxwYXRoIGNsYXNzPSJzdDEiIGQ9Ik0yNDMuNSwzNDAuN2MtMS43LDAtMy41LDAtNS4yLTAuMWMtMi45LTAuMS01LjUtMC4xLTcuOC0wLjFjLTEuOCwwLTMuMiwwLTQuMywwLjJjMS43LDYuMSwzLjksMTIsNi4yLDEyLjkKCQkJYzAuNywwLjIsMS44LDAuNSwzLjIsMC41YzMuNywwLDguOC0xLjgsOC4xLTEwLjRDMjQzLjYsMzQyLjgsMjQzLjYsMzQxLjgsMjQzLjUsMzQwLjd6Ii8+Cgk8L2c+Cgk8cGF0aCBjbGFzcz0ic3QwIiBkPSJNODIuOCwxNjkuM2MwLDAtMC4yLTAuOS0wLjUtMi40Yy0wLjMtMS41LTAuNy0zLjctMS4yLTYuMmMtMC4yLTEuMi0wLjQtMi42LTAuNS0zLjljLTAuMS0xLjMtMC4xLTIuOCwwLjItMy44CgkJYzAuMS0wLjUsMC4zLTAuOSwwLjUtMS4xYzAuMi0wLjIsMC4zLTAuMiwwLjYtMC4zbDAuMiwwbDAuMy0wLjFjMC4xLDAsMCwwLjEsMCwwLjFjMCwwLTAuMSwwLTAuMSwwYzAsMCwwLDAtMC4xLDBsMCwwCgkJYzAuMSwwLDAuMSwwLDAuMiwwYzAuMywwLjEsMC44LDAuNCwxLjMsMC43YzEsMC43LDIuMSwxLjksMy4xLDMuMWMxLDEuMiwyLDIuNSwyLjksMy43YzEuOSwyLjUsMy42LDUsNS4xLDcuMQoJCWMxLjUsMi4xLDIuOCwzLjksMy44LDUuMWMwLjksMS4yLDEuNSwxLjksMS41LDEuOXMwLTAuMi0wLjEtMC42Yy0wLjEtMC40LTAuMS0xLTAuMy0xLjhjLTAuMy0xLjUtMC44LTMuNy0xLjYtNi4zCgkJYy0wLjgtMi41LTItNS41LTMuNi04LjVjLTAuOC0xLjUtMS43LTMtMi44LTQuNWMtMS4xLTEuNS0yLjQtMy00LjEtNC4zYy0wLjktMC43LTItMS4zLTMuMy0xLjdjLTAuNC0wLjEtMC43LTAuMi0xLjEtMC4ybC0wLjMsMAoJCWwtMC40LDBjLTAuMywwLTAuNSwwLTAuOCwwYy0wLjIsMC0wLjYsMC4xLTAuNywwLjFsLTAuMywwLjFsLTAuMywwLjFsLTAuNCwwLjFsLTAuMSwwLjFsLTAuMiwwLjFjLTEuMywwLjUtMi41LDEuNi0zLjIsMi44CgkJYy0wLjcsMS4yLTEsMi40LTEuMSwzLjVjLTAuMiwyLjIsMC4yLDMuOSwwLjcsNS41YzAuNSwxLjYsMS4xLDMsMS43LDQuMmMxLjIsMi41LDIuNSw0LjMsMy41LDUuNWMwLjUsMC42LDAuOSwxLjEsMS4yLDEuNAoJCUM4Mi42LDE2OS4xLDgyLjgsMTY5LjMsODIuOCwxNjkuM3oiLz4KCTxwYXRoIGNsYXNzPSJzdDAiIGQ9Ik0zMjkuOSw5OC43bC0wLjMtMC41bC0wLjQtMC41Yy0wLjQtMC42LTEuOS0xLjYtMi0xLjZsLTAuMi0wLjFsLTAuMSwwbC0wLjMtMC4xbDAsMGwtMC4xLDBsLTAuNC0wLjFsLTAuOC0wLjMKCQljLTAuNi0wLjItMS4yLTAuMy0xLjgtMC40Yy0wLjYtMC4xLTEuMy0wLjEtMS45LTAuMWMtMC42LDAtMS4zLDAuMS0xLjksMC4yYy0yLjUsMC40LTQuOCwxLjctNi41LDMuMmMtMS43LDEuNS0zLDMuMS00LjEsNC44CgkJYy0yLjEsMy4zLTMuMyw2LjctNC4xLDkuNmMtMC44LDIuOS0xLjEsNS4zLTEuMiw3LjFjLTAuMSwwLjktMC4xLDEuNS0wLjEsMmMwLDAuNSwwLDAuNywwLDAuN3MwLjUtMC45LDEuMy0yLjQKCQljMC44LTEuNSwyLTMuNiwzLjQtNmMxLjQtMi40LDMuMi01LjIsNS4yLTcuN2MxLTEuMiwyLjItMi40LDMuNC0zLjNjMS4yLTAuOSwyLjUtMS41LDMuNy0xLjdjMC4zLDAsMC42LTAuMSwwLjktMC4xCgkJYzAuMywwLDAuNiwwLDEsMC4xYzAuMywwLjEsMC43LDAuMSwxLDAuMmwwLjgsMC4ybDAuMywwLjFjMCwwLDAsMCwwLDBjMCwwLDAsMCwwLDBjMCwwLDAsMCwwLDBsMCwwbDAuMSwwbDAsMGMwLDAsMCwwLDAsMAoJCWMwLDAsMC4xLDAuMSwwLjEsMC4yYzAuMiwwLjMsMC4zLDAuOSwwLjQsMS42YzAuMSwxLjQtMC4xLDMtMC4zLDQuNWMtMC4zLDEuNS0wLjYsMy0wLjksNC40Yy0wLjYsMi43LTEuMyw1LjEtMS43LDYuNwoJCWMtMC40LDEuNi0wLjYsMi42LTAuNiwyLjZzMC43LTAuNywxLjgtMi4xYzEuMS0xLjMsMi41LTMuMyw0LTZjMC43LTEuMywxLjQtMi44LDIuMS00LjRjMC42LTEuNywxLjItMy41LDEuNC01LjcKCQljMC4xLTEuMSwwLTIuNC0wLjQtMy44QzMzMC4zLDk5LjQsMzMwLjEsOTksMzI5LjksOTguN3oiLz4KCTxwYXRoIGNsYXNzPSJzdDAiIGQ9Ik0xMDYuNywyNjguM2MwLTIyLjksMTguNi00MS41LDQxLjUtNDEuNWM3LjksMCwxNS4yLDIuMiwyMS41LDZjLTYuMy0zLjgtMTMuNy02LTIxLjYtNgoJCUMxMjUuMiwyMjYuOCwxMDYuNiwyNDUuNCwxMDYuNywyNjguM2MtMC4xLDE1LDcuOSwyOC4yLDE5LjksMzUuNEMxMTQuNywyOTYuNSwxMDYuNywyODMuMywxMDYuNywyNjguM3oiLz4KCTxwYXRoIGNsYXNzPSJzdDAiIGQ9Ik0yNTUuMiwyNzMuOWMtMTEuOS03LjMtMTkuOS0yMC40LTE5LjktMzUuNGMwLTIyLjksMTguNi00MS41LDQxLjUtNDEuNWM3LjksMCwxNS4yLDIuMiwyMS41LDYKCQljLTYuMy0zLjgtMTMuNy02LTIxLjYtNmMtMjIuOSwwLTQxLjUsMTguNi00MS41LDQxLjVDMjM1LjIsMjUzLjQsMjQzLjIsMjY2LjYsMjU1LjIsMjczLjl6Ii8+Cgk8cGF0aCBjbGFzcz0ic3QyIiBkPSJNMTQ2LjIsNDQ5LjJjLTcuMSwxLjYtMjgsMTMtNDYuMSwxNi40Yy0xOC4xLDMuNC0zMy43LDUuMy0zOS4yLDcuM3MtOS43LDYuMSwxLDEwLjFjMTAuOCw0LjEsNjIuOSw1LjUsNjcuNiwwCgkJYzQuNy01LjUtMy4yLTcuOS0xNC42LTcuN2MtOC4xLDAuMS03LjEtMi43LTcuMS0zYzAsMCwwLjUtMy42LDEzLTUuM2MxMi41LTEuNyw2Ny42LTYuOSw2Ni41LTEyLjgKCQlDMTg2LjMsNDQ4LjQsMTUzLjMsNDQ3LjYsMTQ2LjIsNDQ5LjJ6Ii8+CgkKCQk8ZWxsaXBzZSB0cmFuc2Zvcm09Im1hdHJpeCgwLjk3NzEgLTAuMjEyNiAwLjIxMjYgMC45NzcxIC0xMDIuMjI4IDM0Ljc0NTcpIiBjbGFzcz0ic3QyIiBjeD0iMTEwLjQiIGN5PSI0OTIuNiIgcng9IjEwLjgiIHJ5PSIzLjEiLz4KCQoJCTxlbGxpcHNlIHRyYW5zZm9ybT0ibWF0cml4KDAuOTk2OCAtNy45MzYwMDFlLTAyIDcuOTM2MDAxZS0wMiAwLjk5NjggLTM4LjcxMzQgOC4zMjc5KSIgY2xhc3M9InN0MiIgY3g9Ijg1LjQiIGN5PSI0OTEuMiIgcng9IjExLjQiIHJ5PSIzIi8+Cgk8ZWxsaXBzZSB0cmFuc2Zvcm09Im1hdHJpeCgwLjk5MDkgLTAuMTM1IDAuMTM1IDAuOTkwOSAtNjUuMzU1OSAxMy4zMDA5KSIgY2xhc3M9InN0MiIgY3g9IjY1LjQiIGN5PSI0ODguNyIgcng9IjcuNiIgcnk9IjIuNCIvPgoJPGVsbGlwc2UgdHJhbnNmb3JtPSJtYXRyaXgoMC45ODk2IC0wLjE0MzcgMC4xNDM3IDAuOTg5NiAtNjkuMzY1NyAxMi4zMjc3KSIgY2xhc3M9InN0MiIgY3g9IjUwLjciIGN5PSI0ODYuNCIgcng9IjcuNCIgcnk9IjEuOSIvPgoJPGVsbGlwc2UgdHJhbnNmb3JtPSJtYXRyaXgoMC45ODk2IC0wLjE0MzcgMC4xNDM3IDAuOTg5NiAtNjguODAyOSAxMS44MDM2KSIgY2xhc3M9InN0MiIgY3g9IjQ3LjMiIGN5PSI0ODIuMyIgcng9IjcuNCIgcnk9IjEuOSIvPgoJPGVsbGlwc2UgdHJhbnNmb3JtPSJtYXRyaXgoMC45ODk2IC0wLjE0MzcgMC4xNDM3IDAuOTg5NiAtNjguMTQ2NCAxMS42MzE2KSIgY2xhc3M9InN0MiIgY3g9IjQ2LjUiIGN5PSI0NzcuNiIgcng9IjYuNCIgcnk9IjEuNyIvPgoJPHBhdGggY2xhc3M9InN0MiIgZD0iTTI1NC41LDQ1NC45Yy0xMi40LDAuNi00MC40LTAuOC00NC4yLDUuN2MtMy45LDYuNSwxMS40LDguOSwzNS4zLDYuOXM1Ny44LTQuNyw1OS4yLTEyCgkJYzEuNC03LjMtNi4zLTUuOS03LjEtMTAuNWMtMC44LTQuNyw4LjUtNC43LDEwLjMtMTEuNmMxLjgtNi45LTEyLjYtNi4xLTI1LjQtNi4xYy0xMi44LDAtMzQuMSwxLjItMzYuMSw3LjkKCQljLTIsNi43LDkuNyw2LjcsMTguMSw4LjNjOC4zLDEuNiw1LjksNC43LDUuOSw0LjdDMjcwLjEsNDUyLjUsMjY2LjksNDU0LjMsMjU0LjUsNDU0Ljl6Ii8+Cgk8ZWxsaXBzZSBjbGFzcz0ic3QyIiBjeD0iMjIxLjQiIGN5PSI0NzIuNyIgcng9IjEwLjciIHJ5PSIzLjUiLz4KCTxlbGxpcHNlIGNsYXNzPSJzdDIiIGN4PSIyNDkiIGN5PSI0NzEuOSIgcng9IjcuMiIgcnk9IjMuMiIvPgoJPGVsbGlwc2UgY2xhc3M9InN0MiIgY3g9IjI3MS4zIiBjeT0iNDY5LjciIHJ4PSI3LjgiIHJ5PSIyLjYiLz4KCTxlbGxpcHNlIGNsYXNzPSJzdDIiIGN4PSIyODguNSIgY3k9IjQ2Ni44IiByeD0iNS43IiByeT0iMi43Ii8+Cgk8ZWxsaXBzZSBjbGFzcz0ic3QyIiBjeD0iMzAzLjQiIGN5PSI0NjMuNiIgcng9IjUuOCIgcnk9IjIuNyIvPgoJPHBhdGggY2xhc3M9InN0MiIgZD0iTTUxLjEsMzg4LjhjMCwzLjUsNy41LDYuNywyMC45LDkuNmMtMS02LjktMC40LTEzLjksMC41LTE5LjRDNTguOCwzODIsNTEuMSwzODUuMyw1MS4xLDM4OC44eiIvPgoJPHBhdGggY2xhc3M9InN0MiIgZD0iTTQ0Ni41LDM3OS45Yy0wLjIsMC42LTAuNCwxLjEtMC43LDEuN2MtMS42LDMuOS00LDcuMy03LDEwLjFjLTYuMSw1LjctMTEuNCw5LjItMTYuMSwxMC40CgkJYzI2LjItMy43LDQxLjctOC4zLDQxLjctMTMuMkM0NjQuNSwzODUuNiw0NTguMSwzODIuNiw0NDYuNSwzNzkuOXoiLz4KCTxwYXRoIGNsYXNzPSJzdDMiIGQ9Ik05Ni44LDQxNi43YzkuNywwLDE2LjYtNS4zLDIxLjQtMTIuMmMtNS41LTEyLjgtMTQuNS0zNC4yLTIzLjEtNTYuOWMtMi4zLDItNSw1LTcuOSw5LjUKCQljLTcuMiwxMS4yLTEzLjIsMzcuMy01LjcsNTFDODQuNiw0MTMuOSw4OS42LDQxNi43LDk2LjgsNDE2Ljd6Ii8+Cgk8cGF0aCBjbGFzcz0ic3QzIiBkPSJNNDQwLjIsMzUyLjFjLTUuNy0xNC44LTE3LjgtMjUuMi0yOS41LTI1LjVsLTAuNCwwYzAsMC0yLjMtMC4zLTUuMy0wLjNjLTYuMywwLTE0LjEsMS40LTE1LjIsNy44CgkJYy0wLjcsNC41LDEuMiw2LjgsNS40LDExLjFjNC43LDUsMTEuMiwxMS44LDEzLjIsMjZjMi4yLDE2LjMsNi4yLDI0LjYsMTEuOCwyNC42aDBjMi42LDAsNy40LTEuNiwxNS4zLTkuMQoJCUM0NDUuMiwzNzcuNSw0NDQuMywzNjIuOCw0NDAuMiwzNTIuMXoiLz4KCTxwYXRoIGNsYXNzPSJzdDIiIGQ9Ik0yMzUuMywyMzguNGMwLDE1LDgsMjguMiwxOS45LDM1LjRjNi4zLDMuOCwxMy42LDYsMjEuNSw2YzIyLjksMCw0MS41LTE4LjYsNDEuNS00MS41YzAtMTUtOC0yOC4yLTE5LjktMzUuNAoJCWMtNi4zLTMuOC0xMy42LTYtMjEuNS02QzI1My45LDE5Ni45LDIzNS4zLDIxNS41LDIzNS4zLDIzOC40eiBNMjg0LjIsMjUyLjNjMCw3LjItNS45LDEzLjEtMTMuMSwxMy4xYy03LjIsMC0xMy4xLTUuOS0xMy4xLTEzLjEKCQljMC03LjIsNS45LTEzLjEsMTMuMS0xMy4xQzI3OC40LDIzOS4yLDI4NC4yLDI0NSwyODQuMiwyNTIuM3oiLz4KCTxwYXRoIGNsYXNzPSJzdDIiIGQ9Ik0xMDYuNywyNjguM2MwLDE1LDgsMjguMiwxOS45LDM1LjRjNi4zLDMuOCwxMy42LDYsMjEuNSw2YzIyLjksMCw0MS41LTE4LjYsNDEuNS00MS41YzAtMTUtOC0yOC4yLTE5LjktMzUuNAoJCWMtNi4zLTMuOC0xMy42LTYtMjEuNS02QzEyNS4zLDIyNi44LDEwNi43LDI0NS40LDEwNi43LDI2OC4zeiBNMTU3LjUsMjgyLjljMCw3LjItNS45LDEzLjEtMTMuMSwxMy4xYy03LjIsMC0xMy4xLTUuOS0xMy4xLTEzLjEKCQljMC03LjIsNS45LTEzLjEsMTMuMS0xMy4xQzE1MS43LDI2OS44LDE1Ny41LDI3NS43LDE1Ny41LDI4Mi45eiIvPgoJPGNpcmNsZSBjbGFzcz0ic3Q0IiBjeD0iMTQ0LjUiIGN5PSIyODIuOSIgcj0iMTMuMSIvPgoJPGNpcmNsZSBjbGFzcz0ic3Q0IiBjeD0iMjcxLjIiIGN5PSIyNTIuMyIgcj0iMTMuMSIvPgoJPHBhdGggY2xhc3M9InN0NSIgZD0iTTEwOC41LDIwMi4xYy0xLjQtMC4zLTIuMy0wLjQtMi42LTAuNGMtNS41LDAuMy0xMC42LTMuNS0xMS42LTkuMWMtMC4xLTAuNi0wLjEtMS4xLTAuMi0xLjcKCQljLTMsMS43LTYsMy41LTguOCw1LjVsLTUsMy41bC0zLjctNC44Yy0xLjEtMS41LTYuMi04LjQtMTAuOS0xNy41Yy04LjksNC4yLTE1LjgsOC44LTE3LjUsMTMuMWMtMC4zLDAuOC0wLjIsMS4zLDAuMSwxLjcKCQlDNDkuOCwxOTQuNSw1OC40LDIwMSwxMDguNSwyMDIuMXoiLz4KCTxwYXRoIGNsYXNzPSJzdDUiIGQ9Ik0zNDUuNSwxMjAuMWMtMS43LDkuOS00LjksMjAuOC03LDIzLjhsLTIsMi44YzktNC40LDE3LjEtOC42LDIzLjktMTIuNGMyMy43LTEzLjMsMjYuNy0xOS4xLDI3LTIwLjYKCQljMC4yLTEsMC0xLjMtMC4xLTEuNGMtMC4zLTAuMy0xLjktMS45LTkuNC0xLjljLTguMiwwLTE5LjcsMS45LTMxLjYsNC41QzM0Ni4xLDExNi41LDM0NS44LDExOC4yLDM0NS41LDEyMC4xeiIvPgoJPHBhdGggY2xhc3M9InN0NSIgZD0iTTMzNi4zLDE0Ni44bC0zLjQtMC4zYy0wLjEsMC02LjMtMC41LTE0LjktMC41Yy04LjksMC0yMC41LDAuNS0zMC4xLDIuOGMxLjgsMy44LDEuNCw4LjUtMS41LDExLjkKCQljLTIuMywyLjgtNi4zLDcuNS0xMS4xLDEyLjljOC40LTMuNCwxNy4xLTcuMSwyNS44LTEwLjhDMzE0LDE1Ny4zLDMyNS44LDE1MS44LDMzNi4zLDE0Ni44eiIvPgoJPHBhdGggY2xhc3M9InN0NSIgZD0iTTEwOSwxMzYuOGMxMC4yLDIuOCwyMS43LDQuMiwzNC4zLDQuMmM0OC44LDAsMTAyLjQtMjEuMSwxMjMuMy0zMC4ybDEuMy0wLjZjLTAuMi0zLjEsMC4xLTYuNSwwLjgtOS45CgkJYzEuMy02LjEsNC0xMS4yLDcuMi0xNC42Yy0wLjYtMi4zLTEuMS00LTEuNS00LjljLTYuOS0zLjctNjQuMi0yNS05NC4xLTI1Yy0zLDAtNS42LDAuMi03LjcsMC43Yy0yNi41LDUuNC02Ni43LDUxLjQtNjguMSw1Ny45CgkJYy0wLjQsMi44LTAuMywxMS43LDAsMjEuMkwxMDksMTM2Ljh6Ii8+Cgk8cGF0aCBjbGFzcz0ic3Q1IiBkPSJNMjEyLjUsMTg3LjljNC40LTIuOCwxMC0yLjEsMTMuNiwxLjNjMC42LTAuMSwxLjUtMC4zLDIuOS0xYzUuNS0yLjYsMjUuMy0yMy43LDQwLjMtNDEuOAoJCWMwLjUtMC43LDEuMS0xLjIsMS44LTEuN2MtMzQuMywxNC44LTgyLjMsMzEuMS0xMjgsMzEuMWMtNy4zLDAtMTQuMy0wLjQtMjAuOC0xLjNsMSwzbC01LjcsMi4yYzAsMC0xLDAuNC0yLjcsMS4xCgkJYzcuNCwxLjcsMTcuMyw1LjEsMjkuOCwxMC4xYzIyLjksOS4yLDMxLjYsOS42LDMzLjgsOS41YzMuMS0xLjYsNi45LTEuNywxMC4xLTAuMWM1LjktMC40LDEwLjUtMC43LDEzLjMtMQoJCWMxLjMtMC4xLDMuMS0wLjUsNS41LTEuMUMyMDcuMSwxOTQuMSwyMDguOSwxOTAuMiwyMTIuNSwxODcuOXoiLz4KCTxwYXRoIGNsYXNzPSJzdDMiIGQ9Ik0yNjkuMSwxMTYuNmMtMC43LDAuMy0xLjQsMC42LTIuMSwwLjljLTAuMiwwLjEtMC4zLDAuMS0wLjUsMC4yYy0wLjcsMC4zLTEuNCwwLjYtMi4yLDAuOQoJCWMtMC4xLDAuMS0wLjMsMC4xLTAuNCwwLjJjLTAuNywwLjMtMS40LDAuNi0yLjEsMC45Yy0wLjEsMC4xLTAuMywwLjEtMC40LDAuMmMtMC44LDAuMy0xLjYsMC43LTIuNCwxYy0wLjIsMC4xLTAuNCwwLjEtMC41LDAuMgoJCWMtMC45LDAuMy0xLjcsMC43LTIuNiwxYzAsMCwwLDAsMCwwYy0wLjksMC40LTEuOCwwLjctMi43LDEuMWMtMC4yLDAuMS0wLjQsMC4yLTAuNiwwLjJjLTAuOSwwLjQtMS45LDAuNy0yLjgsMS4xCgkJYy0wLjEsMC4xLTAuMywwLjEtMC40LDAuMmMtMC45LDAuMy0xLjgsMC43LTIuNywxYy0wLjIsMC4xLTAuMywwLjEtMC41LDAuMmMtMSwwLjQtMiwwLjctMywxLjFjLTAuMiwwLjEtMC40LDAuMi0wLjYsMC4yCgkJYy0xLDAuNC0yLjEsMC43LTMuMSwxLjFjMCwwLTAuMSwwLTAuMSwwYy0xLjEsMC40LTIuMiwwLjgtMy4zLDEuMWMtMC4yLDAuMS0wLjUsMC4yLTAuNywwLjJjLTEuMSwwLjQtMi4yLDAuOC0zLjMsMS4xCgkJYy0wLjEsMC0wLjMsMC4xLTAuNSwwLjFjLTEsMC4zLTIuMSwwLjctMy4xLDFjLTAuMiwwLjEtMC40LDAuMS0wLjYsMC4yYy0xLjEsMC40LTIuMywwLjctMy41LDEuMWMtMC4yLDAuMS0wLjUsMC4xLTAuNywwLjIKCQljLTEuMSwwLjQtMi4zLDAuNy0zLjUsMS4xYy0wLjEsMC0wLjEsMC0wLjIsMC4xYy0xLjIsMC40LTIuNCwwLjctMy43LDEuMWMtMC4zLDAuMS0wLjUsMC4yLTAuOCwwLjJjLTEuMiwwLjQtMi41LDAuNy0zLjcsMQoJCWMtMC4yLDAtMC4zLDAuMS0wLjUsMC4xYy0xLjIsMC4zLTIuMywwLjYtMy41LDAuOWMtMC4yLDAuMS0wLjUsMC4xLTAuNywwLjJjLTEuMywwLjMtMi41LDAuNi0zLjgsMWMtMC4zLDAuMS0wLjUsMC4xLTAuOCwwLjIKCQljLTEuMiwwLjMtMi41LDAuNi0zLjcsMC45Yy0wLjEsMC0wLjIsMC4xLTAuMywwLjFjLTEuMywwLjMtMi42LDAuNi0zLjksMC45Yy0wLjMsMC4xLTAuNiwwLjEtMC45LDAuMmMtMS4zLDAuMy0yLjYsMC42LTQsMC44CgkJYy0wLjIsMC0wLjMsMC4xLTAuNSwwLjFjLTEuMiwwLjItMi41LDAuNS0zLjcsMC43Yy0wLjMsMC0wLjUsMC4xLTAuOCwwLjFjLTEuMywwLjItMi42LDAuNS00LDAuN2MtMC4zLDAtMC41LDAuMS0wLjgsMC4xCgkJYy0xLjMsMC4yLTIuNSwwLjQtMy44LDAuNmMtMC4xLDAtMC4zLDAtMC40LDAuMWMtMS4zLDAuMi0yLjcsMC40LTQuMSwwLjZjLTAuMywwLTAuNiwwLjEtMC45LDAuMWMtMS40LDAuMi0yLjcsMC4zLTQuMSwwLjUKCQljLTAuMSwwLTAuMywwLTAuNCwwYy0xLjMsMC4xLTIuNSwwLjMtMy44LDAuNGMtMC4zLDAtMC41LDAuMS0wLjgsMC4xYy0xLjMsMC4xLTIuNywwLjItNCwwLjNjLTAuMywwLTAuNSwwLTAuOCwwLjEKCQljLTEuMywwLjEtMi41LDAuMi0zLjgsMC4yYy0wLjIsMC0wLjMsMC0wLjUsMGMtMS40LDAuMS0yLjcsMC4xLTQsMC4yYy0wLjMsMC0wLjYsMC0wLjksMGMtMS40LDAtMi43LDAuMS00LjEsMC4xYzAsMC0wLjEsMC0wLjEsMAoJCWMtMC4xLDAtMC4yLDAtMC4zLDBjLTEuMywwLTIuNiwwLTMuOS0wLjFjLTAuMywwLTAuNSwwLTAuOCwwYy0xLjMsMC0yLjctMC4xLTQtMC4yYy0wLjMsMC0wLjUsMC0wLjgsMGMtMS4zLTAuMS0yLjYtMC4yLTMuOC0wLjMKCQljLTAuMSwwLTAuMiwwLTAuMywwYy0xLjMtMC4xLTIuNy0wLjMtNC0wLjRjLTAuMywwLTAuNi0wLjEtMC45LTAuMWMtMS4zLTAuMi0yLjYtMC4zLTMuOS0wLjVjLTAuMiwwLTAuNC0wLjEtMC41LTAuMQoJCWMtMS4yLTAuMi0yLjQtMC40LTMuNi0wLjZjLTAuMiwwLTAuNS0wLjEtMC43LTAuMWMtMS4zLTAuMi0yLjUtMC41LTMuOC0wLjhjLTAuMy0wLjEtMC41LTAuMS0wLjgtMC4yYy0xLjMtMC4zLTIuNi0wLjYtMy45LTFsMCwwCgkJYzEuMiwxLjgsMi40LDMuNywzLjUsNS44YzQuMiw3LjQsNy4zLDE0LjgsOSwxOS4xYzAuNywwLjEsMS41LDAuMiwyLjMsMC4zYzAuMywwLDAuNSwwLjEsMC44LDAuMWMwLjUsMC4xLDEuMSwwLjEsMS43LDAuMgoJCWMwLjMsMCwwLjYsMC4xLDEsMC4xYzAuNSwwLjEsMS4xLDAuMSwxLjcsMC4yYzAuNCwwLDAuNywwLjEsMS4xLDAuMWMwLjYsMCwxLjEsMC4xLDEuNywwLjFjMC40LDAsMC44LDAuMSwxLjMsMC4xCgkJYzAuNiwwLDEuMSwwLjEsMS43LDAuMWMwLjQsMCwwLjksMCwxLjQsMC4xYzAuNiwwLDEuMSwwLjEsMS43LDAuMWMwLjUsMCwxLDAsMS41LDBjMC42LDAsMS4yLDAsMS44LDAuMWMwLjUsMCwxLjEsMCwxLjYsMAoJCWMwLjYsMCwxLjIsMCwxLjksMGMwLjEsMCwwLjEsMCwwLjIsMGMxLDAsMiwwLDMsMGMwLjMsMCwwLjUsMCwwLjgsMGMwLjksMCwxLjcsMCwyLjYtMC4xYzAuNCwwLDAuNywwLDEuMSwwYzAuOSwwLDEuOS0wLjEsMi44LTAuMQoJCWMwLjIsMCwwLjUsMCwwLjcsMGMxLjItMC4xLDIuNC0wLjEsMy43LTAuMmMwLjMsMCwwLjYsMCwwLjktMC4xYzEtMC4xLDItMC4yLDIuOS0wLjJjMC40LDAsMC44LTAuMSwxLjItMC4xCgkJYzEuMS0wLjEsMi4yLTAuMiwzLjMtMC4zYzAuMywwLDAuNS0wLjEsMC44LTAuMWMxLjMtMC4yLDIuNy0wLjMsNC4xLTAuNWMwLjQsMCwwLjctMC4xLDEuMS0wLjFjMS4xLTAuMSwyLjItMC4zLDMuMy0wLjUKCQljMC40LTAuMSwwLjktMC4xLDEuMy0wLjJjMS4yLTAuMiwyLjUtMC40LDMuNy0wLjZjMC4zLDAsMC41LTAuMSwwLjgtMC4xYzEuNS0wLjMsMy0wLjUsNC42LTAuOGMwLjQtMC4xLDAuOC0wLjIsMS4yLTAuMgoJCWMxLjItMC4yLDIuNC0wLjUsMy42LTAuN2MwLjUtMC4xLDEtMC4yLDEuNS0wLjNjMS40LTAuMywyLjgtMC42LDQuMi0wLjljMC4yLTAuMSwwLjUtMC4xLDAuNy0wLjJjMS42LTAuNCwzLjMtMC44LDUtMS4yCgkJYzAuNS0wLjEsMC45LTAuMiwxLjQtMC40YzEuMy0wLjMsMi42LTAuNiwzLjktMWMwLjUtMC4xLDEuMS0wLjMsMS42LTAuNGMxLjYtMC40LDMuMS0wLjgsNC44LTEuM2MwLjItMC4xLDAuNC0wLjEsMC42LTAuMgoJCWMxLjgtMC41LDMuNi0xLDUuNS0xLjZjMC41LTAuMiwxLTAuMywxLjYtMC41YzEuNC0wLjQsMi44LTAuOSw0LjItMS4zYzAuNi0wLjIsMS4yLTAuNCwxLjctMC42YzEuOC0wLjYsMy41LTEuMiw1LjMtMS44CgkJYzAuMi0wLjEsMC4zLTAuMSwwLjUtMC4yYzItMC43LDMuOS0xLjQsNS45LTIuMWMwLjYtMC4yLDEuMi0wLjQsMS43LTAuNmMxLjUtMC41LDMtMS4xLDQuNi0xLjdjMC42LTAuMiwxLjItMC41LDEuOS0wLjcKCQljMi0wLjcsNC0xLjUsNi0yLjNjMC4xLDAsMC4yLTAuMSwwLjMtMC4xYzIuMS0wLjgsNC4zLTEuNyw2LjQtMi42YzAuNi0wLjMsMS4zLTAuNSwxLjktMC44YzEuNi0wLjcsMy4zLTEuNCw0LjktMi4xCgkJYzAuNy0wLjMsMS4zLTAuNiwyLTAuOGMyLjItMSw0LjUtMiw2LjctM2MwLjktMywyLjItNi43LDMuOC0xMC44Yy0wLjEsMC0wLjIsMC0wLjQsMGMtMC42LDAtMS4zLTAuMS0xLjktMC4yCgkJQzI3My40LDEyNC4xLDI3MC42LDEyMS4xLDI2OS4xLDExNi42eiIvPgoJPHBhdGggY2xhc3M9InN0NSIgZD0iTTE0My40LDE0Ny4zYy0wLjEsMC0wLjIsMC0wLjQsMEMxNDMuMSwxNDcuMywxNDMuMiwxNDcuMywxNDMuNCwxNDcuM0MxNDMuMywxNDcuMywxNDMuMywxNDcuMywxNDMuNCwxNDcuM3oiCgkJLz4KCTxwb2x5Z29uIGNsYXNzPSJzdDEiIHBvaW50cz0iODAuMywxMjYuNyA4MC4zLDEyNi43IDgwLjMsMTI5LjkgCSIvPgoJPHBhdGggY2xhc3M9InN0MyIgZD0iTTI4Ni42LDgxLjRjMy45LDAuOSw2LjgsNC4xLDguMyw5LjJjMC4yLDAuOCwwLjQsMS43LDAuNiwyLjZjOC45LTEyLjUsMTguNi0xOC45LDI5LTE4LjljNC40LDAsOC4yLDEsMTEuNCwzCgkJYzUuNS02LjcsOC45LTExLjIsOC45LTExLjJjLTQuMSwwLjctMTIuNywxLjktMTIuNywxLjlDMzY0LjYsNTYsMzYyLDIzLjUsMzYyLDIzLjVjMCw1LjYtMTYuOCwxOS4xLTE2LjgsMTkuMQoJCWMwLjctNC45LTEuOS0xMS4yLTEuOS0xMS4yYzAuNyw2LjQtMTkuNCwyMi44LTE5LjQsMjIuOGMxLjUtMywwLjQtOC4yLDAuNC04LjJjLTEuMSw2LTEwLjEsOC4yLTEwLjEsOC4yCgkJYzUuNi02LjcsMTYuMS00Mi4yLDguMi00NC41Yy03LjgtMi4yLTE4LjcsMjMuMi0xOC43LDIzLjJjLTAuNC02LTMuNy02LTMuNy02YzEuNSwxOC43LTEzLjUsMzMuNi0xMy41LDMzLjYKCQljLTEuMS0zLjctNy4xLTUuNi03LjEtNS42YzEuNCwzLDAuNiwxMy44LTAuMiwyMS41Yy0wLjMsMy0wLjYsNS41LTAuOCw2LjljMi0xLjQsNC4xLTIuMiw2LjItMi4yQzI4NS4zLDgxLjIsMjg2LDgxLjMsMjg2LjYsODEuNHoKCQkiLz4KCTxwYXRoIGNsYXNzPSJzdDIiIGQ9Ik0yNzguNCwxMTguN2MxLjIsMC4zLDIuNy0wLjQsNC4yLTEuOGMxLTIuMywyLTQuNiwzLjItN2MxLTIuMiwyLjEtNC4yLDMuMi02LjJjMC44LTQuMSwwLjctOC4yLTAuMi0xMS4zCgkJYy0wLjgtMi43LTIuMS00LjUtMy41LTQuOGMtMC4yLDAtMC40LTAuMS0wLjUtMC4xYy0zLjIsMC04LDUuNi05LjgsMTRjLTEsNC40LTEsOC45LDAsMTIuM0MyNzUuNiwxMTYuNSwyNzcsMTE4LjMsMjc4LjQsMTE4Ljd6Ii8+Cgk8cGF0aCBjbGFzcz0ic3QxIiBkPSJNMzI0LjgsMTAxLjdMMzI0LjgsMTAxLjdsLTAuMSwwQzMyNC43LDEwMS43LDMyNC43LDEwMS43LDMyNC44LDEwMS43QzMyNC43LDEwMS43LDMyNC43LDEwMS43LDMyNC44LDEwMS43CgkJQzMyNC43LDEwMS43LDMyNC43LDEwMS43LDMyNC44LDEwMS43TDMyNC44LDEwMS43eiIvPgoJPHBhdGggY2xhc3M9InN0MSIgZD0iTTMyNC40LDgwLjdjLTI1LjEsMC00MS4yLDUxLjMtNDQuMyw2MmMwLjksMC4yLDEuOCwwLjUsMi42LDAuOWMxMC44LTMuMiwyNC43LTQsMzUuMy00CgkJYzguOSwwLDE1LjQsMC41LDE1LjQsMC41QzMzNi4yLDEzNi4yLDM1Mi40LDgwLjcsMzI0LjQsODAuN3ogTTMzMC44LDEwMy41Yy0wLjIsMi4yLTAuOCw0LTEuNCw1LjdjLTAuNiwxLjYtMS40LDMuMS0yLjEsNC40CgkJYy0xLjQsMi42LTIuOSw0LjYtNCw2Yy0xLjEsMS40LTEuOCwyLjEtMS44LDIuMXMwLjItMSwwLjYtMi42YzAuNC0xLjcsMS00LDEuNy02LjdjMC4zLTEuNCwwLjYtMi44LDAuOS00LjQKCQljMC4zLTEuNSwwLjQtMy4xLDAuMy00LjVjLTAuMS0wLjctMC4yLTEuMy0wLjQtMS42YzAtMC4xLTAuMS0wLjEtMC4xLTAuMmMwLDAsMCwwLDAsMGMwLDAsMCwwLDAsMGwtMC4zLTAuMWwtMC44LTAuMgoJCWMtMC4zLTAuMS0wLjctMC4xLTEtMC4yYy0wLjMtMC4xLTAuNiwwLTEtMC4xYy0wLjMsMC0wLjYsMC4xLTAuOSwwLjFjLTEuMiwwLjItMi41LDAuOC0zLjcsMS43Yy0xLjIsMC45LTIuNCwyLjEtMy40LDMuMwoJCWMtMi4xLDIuNS0zLjgsNS4zLTUuMiw3LjdjLTEuNCwyLjQtMi42LDQuNS0zLjQsNmMtMC44LDEuNS0xLjMsMi40LTEuMywyLjRzMC0wLjIsMC0wLjdjMC0wLjUsMC0xLjEsMC4xLTIKCQljMC4xLTEuNywwLjUtNC4yLDEuMi03LjFjMC44LTIuOSwyLTYuMiw0LjEtOS42YzEuMS0xLjcsMi40LTMuMyw0LjEtNC44YzEuNy0xLjUsNC0yLjcsNi41LTMuMmMwLjYtMC4xLDEuMy0wLjEsMS45LTAuMgoJCWMwLjYsMCwxLjMsMCwxLjksMC4xYzAuNiwwLjEsMS4yLDAuMiwxLjgsMC40bDAuOCwwLjNsMC40LDAuMWwwLjEsMGwwLDBsMC4zLDAuMWwwLjEsMGwwLjIsMC4xYzAuMSwwLDEuNiwxLDIsMS42bDAuNCwwLjVsMC4zLDAuNQoJCWMwLjIsMC40LDAuNCwwLjcsMC41LDEuMUMzMzAuOSwxMDEuMiwzMzAuOSwxMDIuNCwzMzAuOCwxMDMuNXoiLz4KCTxwYXRoIGNsYXNzPSJzdDEiIGQ9Ik0zMjQuNywxMDEuNkMzMjQuNiwxMDEuNiwzMjQuNiwxMDEuNiwzMjQuNywxMDEuNkMzMjQuNiwxMDEuNiwzMjQuNiwxMDEuNiwzMjQuNywxMDEuNkwzMjQuNywxMDEuNgoJCUMzMjQuNywxMDEuNywzMjQuNywxMDEuNiwzMjQuNywxMDEuNnoiLz4KCTxwYXRoIGNsYXNzPSJzdDIiIGQ9Ik0zMjQuNywxMDEuN0wzMjQuNywxMDEuN0MzMjQuNywxMDEuNywzMjQuNywxMDEuNywzMjQuNywxMDEuN0MzMjQuNywxMDEuNywzMjQuNywxMDEuNywzMjQuNywxMDEuNwoJCUMzMjQuNywxMDEuNywzMjQuNywxMDEuNywzMjQuNywxMDEuN0MzMjQuNywxMDEuNywzMjQuNywxMDEuNywzMjQuNywxMDEuN3oiLz4KCTxwYXRoIGNsYXNzPSJzdDIiIGQ9Ik0yMjUuNSwyMDQuOGMzLDAsNi40LTAuOCw5LjktMi40YzcuNC0zLjMsMjUuNC0yMS40LDQ1LjktNDZjMC43LTAuOSwxLjEtMiwxLTMuMmMtMC4xLTEuMi0wLjctMi4yLTEuNi0zCgkJYy0xLTAuOC0yLjEtMS0yLjgtMWMtMS4zLDAtMi41LDAuNi0zLjQsMS42Yy04LjksMTAuNy0zNCwzOS41LTQyLjYsNDMuNmwtMC4xLDAuMWMtMS43LDAuOC0zLjIsMS4yLTQuNiwxLjVsLTMuMywwLjVsLTIuNC0yLjMKCQljLTAuOC0wLjgtMS45LTEuMi0zLTEuMmMtMC44LDAtMS42LDAuMi0yLjMsMC43Yy0xLDAuNi0xLjcsMS42LTEuOSwyLjhjLTAuMywxLjEsMCwyLjMsMC42LDMuMwoJCUMyMTUuMSwyMDAuMiwyMTguMywyMDQuOCwyMjUuNSwyMDQuOHoiLz4KCTxwYXRoIGNsYXNzPSJzdDIiIGQ9Ik0xODMuNywyMDUuOGMtMC43LDAtMS40LDAuMi0yLjEsMC41bC0xLjMsMC43bC0xLjUsMC4xYy0wLjMsMC0wLjYsMC0xLjEsMGMtNC4xLDAtMTQuMi0xLjMtMzUuNy0xMAoJCWMtMjMuNy05LjYtMzMtMTEtMzYuNS0xMWMtMC43LDAtMS4xLDAuMS0xLjIsMC4xYy0xLjIsMC4yLTIuMiwwLjktMi44LDEuOGMtMC43LDEtMC45LDIuMS0wLjcsMy4zYzAuNCwyLjEsMi4yLDMuNiw0LjMsMy42CgkJYzAuMSwwLDAuMiwwLDAuMywwbDAuNSwwbDAuNSwwYzIuNiwwLjIsMTEsMS43LDMyLjUsMTAuM2MxNy40LDcsMzAuNSwxMC42LDM5LjEsMTAuNmM0LjUsMCw3LjYtMSw5LjEtMi45YzAuNy0wLjksMS4xLTIsMS0zLjIKCQlzLTAuNy0yLjItMS42LTNDMTg1LjUsMjA2LDE4NC40LDIwNS44LDE4My43LDIwNS44eiIvPgoJPHBhdGggY2xhc3M9InN0MSIgZD0iTTExNS4zLDE3My44YzAsMC0xNC45LTQzLjktMzUuMS00My45Yy0yLjYsMC01LjMsMC43LTguMSwyLjRjLTI0LjEsMTQuNiw5LjUsNTguOSw5LjUsNTguOQoJCUM5Ni4zLDE4MS4xLDExNS4zLDE3My44LDExNS4zLDE3My44eiBNNzcuNywxNjEuOWMtMC42LTEuMi0xLjItMi42LTEuNy00LjJjLTAuNC0xLjYtMC45LTMuNC0wLjctNS41YzAuMS0xLjEsMC40LTIuMywxLjEtMy41CgkJYzAuNy0xLjIsMi0yLjMsMy4yLTIuOGwwLjItMC4xbDAuMS0wLjFsMC40LTAuMWwwLjMtMC4xbDAuMy0wLjFjMC4xLDAsMC41LTAuMSwwLjctMC4xYzAuMiwwLDAuNSwwLDAuOCwwbDAuNCwwbDAuMywwCgkJYzAuNCwwLjEsMC43LDAuMSwxLjEsMC4yYzEuNCwwLjQsMi40LDEsMy4zLDEuN2MxLjgsMS40LDMsMi44LDQuMSw0LjNjMS4xLDEuNSwyLDMsMi44LDQuNWMxLjYsMywyLjgsNS45LDMuNiw4LjUKCQljMC44LDIuNSwxLjMsNC43LDEuNiw2LjNjMC4yLDAuOCwwLjIsMS40LDAuMywxLjhjMCwwLjQsMC4xLDAuNiwwLjEsMC42cy0wLjYtMC43LTEuNS0xLjljLTAuOS0xLjItMi4zLTMtMy44LTUuMQoJCWMtMS41LTIuMS0zLjItNC42LTUuMS03LjFjLTAuOS0xLjMtMS45LTIuNS0yLjktMy43Yy0xLTEuMi0yLjEtMi4zLTMuMS0zLjFjLTAuNS0wLjQtMS0wLjYtMS4zLTAuN2MtMC4xLDAtMC4xLDAtMC4yLDBsMCwwCgkJYzAsMCwwLDAsMC4xLDBjMCwwLDAuMSwwLDAuMSwwYzAsMCwwLjEtMC4xLDAtMC4xbC0wLjMsMC4xbC0wLjIsMGMtMC4zLDAuMS0wLjQsMC4yLTAuNiwwLjNjLTAuMiwwLjItMC40LDAuNi0wLjUsMS4xCgkJYy0wLjMsMS0wLjMsMi41LTAuMiwzLjhjMC4xLDEuNCwwLjMsMi43LDAuNSwzLjljMC40LDIuNSwwLjksNC42LDEuMiw2LjJjMC4zLDEuNSwwLjUsMi40LDAuNSwyLjRzLTAuMi0wLjItMC40LTAuNQoJCWMtMC4zLTAuMy0wLjctMC44LTEuMi0xLjRDODAuMiwxNjYuMiw3OC45LDE2NC4zLDc3LjcsMTYxLjl6Ii8+Cgk8cGF0aCBjbGFzcz0ic3Q0IiBkPSJNMjE5LDMwOS43YzAuMiwwLDAuNS0wLjEsMC43LTAuMWMwLjMsMCwwLjUtMC4xLDAuOC0wLjJjMTAuNi0yLjIsMTguNS04LjMsMTguNi0xNC41YzAtMC40LDAtMC45LTAuMS0xLjMKCQljLTAuMS0wLjgtMC40LTEuNi0wLjgtMi4zYy0wLjEtMC4zLTAuMy0wLjUtMC41LTAuOGMtMC4xLTAuMS0wLjItMC4yLTAuMi0wLjNjLTAuMS0wLjEtMC4yLTAuMi0wLjMtMC4zYy0wLjMtMC4zLTAuNS0wLjYtMC44LTAuOQoJCWMwLDAsMCwwLDAsMGMwLDAsMCwwLDAsMGMtMC4yLTAuMi0wLjUtMC40LTAuOC0wLjZjMCwwLDAsMCwwLDBjLTEuMy0xLTIuOS0xLjktNC44LTIuNWMtMC4xLDAtMC4yLTAuMS0wLjMtMC4xCgkJYy0wLjMtMC4xLTAuNi0wLjItMC45LTAuM2MtMC4xLDAtMC4zLTAuMS0wLjQtMC4xYy0wLjMtMC4xLTAuNi0wLjItMC45LTAuMmMtMC4yLDAtMC4zLTAuMS0wLjUtMC4xYy0wLjMtMC4xLTAuNi0wLjEtMC45LTAuMgoJCWMtMC4yLDAtMC41LTAuMS0wLjctMC4xYy0wLjQtMC4xLTAuOC0wLjEtMS4zLTAuMmMtMC4zLDAtMC42LTAuMS0wLjktMC4xYy0wLjIsMC0wLjUsMC0wLjcsMGMtMC4zLDAtMC42LDAtMSwwYy0wLjIsMC0wLjUsMC0wLjcsMAoJCWMtMC4zLDAtMC43LDAtMSwwYy0wLjIsMC0wLjQsMC0wLjcsMGMtMC40LDAtMC44LDAtMS4xLDAuMWMtMC4yLDAtMC40LDAtMC42LDBjLTAuNiwwLTEuMiwwLjEtMS43LDAuMmMtMC41LDAuMS0xLjEsMC4xLTEuNiwwLjIKCQljLTAuNSwwLjEtMSwwLjItMS41LDAuM2MtMC4xLDAtMC4yLDAuMS0wLjQsMC4xYy0wLjUsMC4xLTEsMC4yLTEuNCwwLjNjMCwwLDAsMCwwLDBjLTAuNSwwLjEtMSwwLjMtMS40LDAuNAoJCWMtMC4xLDAtMC4yLDAuMS0wLjMsMC4xYy0wLjUsMC4xLTAuOSwwLjMtMS40LDAuNGMwLDAsMCwwLDAsMGMtMC41LDAuMi0wLjksMC4zLTEuMywwLjVjLTAuMSwwLTAuMiwwLjEtMC4zLDAuMQoJCWMtMC45LDAuNC0xLjcsMC43LTIuNSwxLjFjLTAuMSwwLTAuMiwwLjEtMC4yLDAuMWMtMC40LDAuMi0wLjgsMC40LTEuMSwwLjZjMCwwLDAsMCwwLDBsMCwwYy0wLjMsMC4yLTAuNiwwLjQtMSwwLjYKCQljLTAuMSwwLTAuMSwwLjEtMC4yLDAuMWMtMC4yLDAuMi0wLjUsMC4zLTAuNywwLjVjLTAuMSwwLjEtMC4yLDAuMS0wLjIsMC4yYy0wLjIsMC4yLTAuNCwwLjMtMC42LDAuNWMtMC4xLDAuMS0wLjEsMC4xLTAuMiwwLjIKCQljLTAuNSwwLjQtMSwwLjktMS41LDEuM2MtMC4xLDAtMC4xLDAuMS0wLjEsMC4xYy0wLjIsMC4yLTAuMywwLjMtMC41LDAuNWMtMC4xLDAuMS0wLjEsMC4xLTAuMiwwLjJjLTAuMiwwLjItMC4zLDAuMy0wLjQsMC41CgkJYy0wLjEsMC4xLTAuMSwwLjEtMC4yLDAuMmMtMC4yLDAuMi0wLjQsMC41LTAuNSwwLjdjMCwwLDAsMCwwLDBjLTAuMiwwLjItMC4zLDAuNS0wLjUsMC43YzAsMC4xLTAuMSwwLjEtMC4xLDAuMgoJCWMtMC4xLDAuMi0wLjIsMC40LTAuMywwLjVjMCwwLjEtMC4xLDAuMi0wLjEsMC4yYy0wLjEsMC4yLTAuMiwwLjMtMC4yLDAuNWMwLDAuMS0wLjEsMC4xLTAuMSwwLjJjLTAuMSwwLjItMC4yLDAuNS0wLjIsMC43CgkJYzAsMCwwLDAsMCwwYy0wLjEsMC4yLTAuMSwwLjUtMC4yLDAuN2MwLDAuMSwwLDAuMSwwLDAuMmMwLDAuMiwwLDAuMy0wLjEsMC41YzAsMC4xLDAsMC4yLDAsMC4zYzAsMC4yLDAsMC4zLDAsMC41CgkJYzAsMC4xLDAsMC4yLDAsMC4yYzAsMC4yLDAsMC41LDAuMSwwLjdjMC4xLDAuNCwwLjIsMC44LDAuMywxLjFDMTk3LjMsMzA4LjIsMjA3LjUsMzExLjYsMjE5LDMwOS43eiIvPgoJPHBhdGggY2xhc3M9InN0NCIgZD0iTTE5Mi40LDMwMS45YzAuNCwyLjIsMS42LDQsMy42LDUuNWMwLjIsMC4yLDAuNCwwLjMsMC42LDAuNWMzLjMsMi4zLDguMiwzLjYsMTMuOSwzLjdjMi4yLDAsNC41LTAuMiw2LjktMC42CgkJYzcuMS0xLjIsMTMuMi00LjEsMTYuOS03LjZjMC44LTAuOCwxLjUtMS42LDIuMS0yLjVjMC42LTAuOCwxLTEuNywxLjMtMi42YzAuMy0wLjksMC41LTEuOCwwLjUtMi43YzAtMC40LDAtMC45LTAuMS0xLjMKCQljLTAuMy0xLjgtMS4yLTMuNC0yLjYtNC43Yy0wLjQtMC4zLTAuNy0wLjctMS4yLTFjLTAuOC0wLjYtMS44LTEuMi0yLjgtMS42Yy0xLjQtMC43LTMuMS0xLjItNC44LTEuNmMtMC44LTAuMi0xLjYtMC4zLTIuNC0wLjQKCQljLTEuMy0wLjItMi43LTAuMy00LjItMC4zYzAsMCwwLDAtMC4xLDBjLTEuNSwwLTMsMC4xLTQuNSwwLjJjLTAuOCwwLjEtMS42LDAuMi0yLjQsMC4zYy0yLjQsMC40LTQuNiwxLTYuNywxLjcKCQlDMTk3LjQsMjkwLjEsMTkxLjQsMjk2LjEsMTkyLjQsMzAxLjl6Ii8+Cgk8cGF0aCBjbGFzcz0ic3QyIiBkPSJNMjEzLjEsMzU4LjFjMC44LDAsMS42LTAuMiwyLjUtMC41YzQtMS42LDQuMi04LjYsMy4yLTE1LjNjLTUuNywxLjgtMTAuOCw0LjctMTUuMiw3LjMKCQlDMjA2LDM1NC4yLDIwOS4yLDM1OC4xLDIxMy4xLDM1OC4xeiIvPgoJPHBhdGggY2xhc3M9InN0MiIgZD0iTTIzMi40LDM1My41YzAuNywwLjIsMS44LDAuNSwzLjIsMC41YzMuNywwLDguOC0xLjgsOC4xLTEwLjRjLTAuMS0wLjgtMC4xLTEuOC0wLjEtMi45Yy0xLjcsMC0zLjUsMC01LjItMC4xCgkJYy0yLjktMC4xLTUuNS0wLjEtNy44LTAuMWMtMS44LDAtMy4yLDAtNC4zLDAuMkMyMjcuOSwzNDYuNywyMzAuMSwzNTIuNiwyMzIuNCwzNTMuNXoiLz4KCTxwYXRoIGNsYXNzPSJzdDMiIGQ9Ik0yNDcuNSwzMDVjMCwwLTcsMTYtMjYuMiwxOWMtNSwwLjgtOS4zLDEuMS0xMi45LDEuMWMtMTAuMywwLTE1LjMtMi43LTE3LjgtNS42YzAsMC0xOC40LDUuMy0yMCwxNi42CgkJYy0xLjIsOC41LDcuMiwxMi44LDE0LjYsMTIuOGMyLjUsMCw0LjktMC41LDYuNy0xLjVjNy40LTQsMTguNC0xMi42LDMzLjItMTQuNWMxLjMtMC4yLDMuMi0wLjIsNS40LTAuMmM1LDAsMTEuOSwwLjMsMTguNiwwLjMKCQljNy42LDAsMTQuOS0wLjQsMTguOS0yLjJjOS4xLTQsOS4xLTEwLjcsOC41LTE0LjFDMjc1LjksMzEyLjksMjcwLjQsMzA1LjIsMjQ3LjUsMzA1eiIvPgo8L2c+Cjwvc3ZnPgo=

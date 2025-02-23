@@ -1,0 +1,158 @@
+displayName: argocd-image-updater
+description: A Helm chart for Argo CD Image Updater, a tool to automatically update the container images of Kubernetes workloads which are managed by Argo CD
+category:
+- artifact-hub
+type: catalog
+allowMultipleInstances: false
+scope:
+- workspace
+licensing:
+- Ultimate
+- Enterprise
+certifications:
+overview: |
+    # argocd-image-updater
+    
+    A Helm chart for Argo CD Image Updater, a tool to automatically update the container images of Kubernetes workloads which are managed by Argo CD
+    
+    To regenerate this document, from the root of this chart directory run:
+    ```shell
+    docker run --rm --volume "$(pwd):/helm-docs" -u $(id -u) jnorwood/helm-docs:latest
+    ```
+    
+    ## Installation
+    
+    ```console
+    helm repo add argo https://argoproj.github.io/argo-helm
+    helm install argocd-image-updater argo/argocd-image-updater
+    ```
+    
+    You will also need to run through the [secret setup documentation] so Argo CD Image Updater can talk to the Argo CD API (until its automated in this chart).
+    
+    ## Prerequisites
+    
+    * Helm v3.0.0+
+    
+    ## Configuration options
+    
+    In order for your deployment of Argo CD Image Updater to be successful, you will need to make sure you set the correct configuration options described in detail on the [argocd-image-updater flags page].
+    
+    All of the `argocd-` prefixed flags, which tell `argocd-image-updater` how your Argo CD instance is setup, are set in the `config.argocd` values block. For instance:
+    
+    ```yaml
+    config:
+      argocd:
+        grpcWeb: false
+        serverAddress: "http://argocd.argo"
+        insecure: true
+        plaintext: true
+    ```
+    
+    Any additional arguments mentioned on the [argocd-image-updater flags page] can be configured using the `extraArgs` value, like so.
+    
+    ### Argo CD API key
+    
+    If you are unable to install Argo CD Image Updater into the same Kubernetes cluster you might configure it to use API of your Argo CD installation.
+    Please also read [Configuration of Container Registries].
+    
+    ```yaml
+    config:
+      argocd:
+        token: <your_secret_here>
+    ```
+    
+    If you specify a token value the secret will be created.
+    
+    ### Registries
+    
+    Argo CD Image Updater natively supports the following registries (as mentioned in [Configuration of Container Registries]):
+    
+    - Docker Hub
+    - Google Container Registry
+    - RedHat Quay
+    - GitHub Container Registry
+    - GitHub Docker Packages
+    
+    If you need support for ECR, you can reference this issue, [Support ECR authentication], for configuration. You can use the `authScripts` values to configure the scripts that are needed to authenticate with ECR.
+    
+    The `config.registries` value can be used exactly as it looks in the documentation as it gets dumped directly into a configmap in this chart.
+    
+    ## Values
+    
+    | Key | Type | Default | Description |
+    |-----|------|---------|-------------|
+    | affinity | object | `{}` | Kubernetes affinity settings for the deployment |
+    | authScripts.enabled | bool | `false` | Whether to mount the defined scripts that can be used to authenticate with a registry, the scripts will be mounted at `/scripts` |
+    | authScripts.name | string | `"argocd-image-updater-authscripts"` | Name of the authentication scripts ConfigMap |
+    | authScripts.scripts | object | `{}` | Map of key-value pairs where the key consists of the name of the script and the value the contents |
+    | config.applicationsAPIKind | string | `""` | API kind that is used to manage Argo CD applications (`kubernetes` or `argocd`) |
+    | config.argocd.grpcWeb | bool | `true` | Use the gRPC-web protocol to connect to the Argo CD API |
+    | config.argocd.insecure | bool | `false` | If specified, the certificate of the Argo CD API server is not verified. |
+    | config.argocd.plaintext | bool | `false` | If specified, use an unencrypted HTTP connection to the Argo CD API instead of TLS. |
+    | config.argocd.serverAddress | string | `""` | Connect to the Argo CD API server at server address |
+    | config.argocd.token | string | `""` | If specified, the secret with Argo CD API key will be created. |
+    | config.argocd.tokenSecretName | string | `"argocd-image-updater-secret"` | Name of the Secret containing the token |
+    | config.disableKubeEvents | bool | `false` | Disable kubernetes events |
+    | config.gitCommitMail | string | `""` | E-Mail address to use for Git commits |
+    | config.gitCommitSignOff | bool | `false` | Enables sign off on commits |
+    | config.gitCommitSigningKey | string | `""` | Path to public SSH key mounted in container, or GPG key ID used to sign commits |
+    | config.gitCommitSigningMethod | string | `""` | Method used to sign Git commits. `openpgp` or `ssh` |
+    | config.gitCommitTemplate | string | `""` | Changing the Git commit message |
+    | config.gitCommitUser | string | `""` | Username to use for Git commits |
+    | config.logLevel | string | `"info"` | Argo CD Image Update log level |
+    | config.name | string | `"argocd-image-updater-config"` | Name of the ConfigMap |
+    | config.registries | list | `[]` | Argo CD Image Updater registries list configuration. More information [here](https://argocd-image-updater.readthedocs.io/en/stable/configuration/registries/) |
+    | config.sshConfig.config | string | `""` | Argo CD Image Updater ssh client parameter configuration. |
+    | config.sshConfig.name | string | `"argocd-image-updater-ssh-config"` | Name of the sshConfig ConfigMap |
+    | createClusterRoles | bool | `true` | Create cluster roles for cluster-wide installation. |
+    | extraArgs | list | `[]` | Extra arguments for argocd-image-updater not defined in `config.argocd`. If a flag contains both key and value, they need to be split to a new entry |
+    | extraEnv | list | `[]` | Extra environment variables for argocd-image-updater |
+    | extraEnvFrom | list | `[]` | Extra envFrom to pass to argocd-image-updater |
+    | extraObjects | list | `[]` | Extra K8s manifests to deploy for argocd-image-updater |
+    | fullnameOverride | string | `""` | Global fullname (argocd-image-updater.fullname in _helpers.tpl) override |
+    | image.pullPolicy | string | `"Always"` | Default image pull policy |
+    | image.repository | string | `"quay.io/argoprojlabs/argocd-image-updater"` | Default image repository |
+    | image.tag | string | `""` | Overrides the image tag whose default is the chart appVersion |
+    | imagePullSecrets | list | `[]` | ImagePullSecrets for the image updater deployment |
+    | initContainers | list | `[]` | Init containers to add to the image updater pod |
+    | metrics.enabled | bool | `false` | Deploy metrics service |
+    | metrics.service.annotations | object | `{}` | Metrics service annotations |
+    | metrics.service.labels | object | `{}` | Metrics service labels |
+    | metrics.service.servicePort | int | `8081` | Metrics service port |
+    | metrics.serviceMonitor.additionalLabels | object | `{}` | Prometheus ServiceMonitor labels |
+    | metrics.serviceMonitor.enabled | bool | `false` | Enable a prometheus ServiceMonitor |
+    | metrics.serviceMonitor.interval | string | `"30s"` | Prometheus ServiceMonitor interval |
+    | metrics.serviceMonitor.metricRelabelings | list | `[]` | Prometheus [MetricRelabelConfigs] to apply to samples before ingestion |
+    | metrics.serviceMonitor.namespace | string | `""` | Prometheus ServiceMonitor namespace |
+    | metrics.serviceMonitor.relabelings | list | `[]` | Prometheus [RelabelConfigs] to apply to samples before scraping |
+    | metrics.serviceMonitor.selector | object | `{}` | Prometheus ServiceMonitor selector |
+    | nameOverride | string | `""` | Global name (argocd-image-updater.name in _helpers.tpl) override |
+    | namespaceOverride | string | `""` | Global namespace (argocd-image-updater.namespace in _helpers.tpl) override |
+    | nodeSelector | object | `{}` | Kubernetes nodeSelector settings for the deployment |
+    | podAnnotations | object | `{}` | Pod Annotations for the deployment |
+    | podLabels | object | `{}` | Pod Labels for the deployment |
+    | podSecurityContext | object | `{}` | Pod security context settings for the deployment |
+    | rbac.enabled | bool | `true` | Enable RBAC creation |
+    | replicaCount | int | `1` | Replica count for the deployment. It is not advised to run more than one replica. |
+    | resources | object | `{}` | Pod memory and cpu resource settings for the deployment |
+    | securityContext | object | See [values.yaml] | Security context settings for the deployment |
+    | serviceAccount.annotations | object | `{}` | Annotations to add to the service account |
+    | serviceAccount.create | bool | `true` | Specifies whether a service account should be created |
+    | serviceAccount.labels | object | `{}` | Labels to add to the service account |
+    | serviceAccount.name | string | `""` | The name of the service account to use. If not set and create is true, a name is generated using the fullname template |
+    | tolerations | list | `[]` | Kubernetes toleration settings for the deployment |
+    | updateStrategy | object | `{"type":"Recreate"}` | The deployment strategy to use to replace existing pods with new ones |
+    | volumeMounts | list | `[]` | Additional volumeMounts to the image updater main container |
+    | volumes | list | `[]` | Additional volumes to the image updater pod |
+    
+    ----------------------------------------------
+    Autogenerated from chart metadata using [helm-docs](https://github.com/norwoodj/helm-docs)
+    
+    [MetricRelabelConfigs]: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#metric_relabel_configs
+    [RelabelConfigs]: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config
+    [secret setup documentation]: https://argocd-image-updater.readthedocs.io/en/stable/install/installation/#method-2-connect-using-argo-cd-api-server
+    [argocd-image-updater flags page]: https://argocd-image-updater.readthedocs.io/en/stable/install/reference/#flags
+    [Configuration of Container Registries]: https://argocd-image-updater.readthedocs.io/en/stable/configuration/registries/
+    [Support ECR authentication]: https://github.com/argoproj-labs/argocd-image-updater/issues/112
+    
+icon: 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

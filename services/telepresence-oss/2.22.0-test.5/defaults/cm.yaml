@@ -1,0 +1,8 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: telepresence-oss-2.22.0-test.5-defaults
+  namespace: ${releaseNamespace}
+data:
+  values.yaml: |

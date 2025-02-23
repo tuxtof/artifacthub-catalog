@@ -1,0 +1,8 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prom-label-proxy-0.10.1-defaults
+  namespace: ${releaseNamespace}
+data:
+  values.yaml: |

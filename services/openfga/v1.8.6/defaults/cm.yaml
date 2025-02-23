@@ -1,0 +1,8 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openfga-0.2.23-defaults
+  namespace: ${releaseNamespace}
+data:
+  values.yaml: |

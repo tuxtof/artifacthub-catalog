@@ -1,0 +1,25 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: cert-manager-google-cas-issuer
+  namespace: ${releaseNamespace}
+spec:
+  chart:
+    spec:
+      chart: cert-manager-google-cas-issuer
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: cert-manager
+        namespace: ${releaseNamespace}
+      version: 0.9.0
+  interval: 1m0s
+  targetNamespace: ${releaseNamespace}
+  releaseName: cert-manager-google-cas-issuer
+  valuesFrom:
+    - kind: ConfigMap
+      name: cert-manager-google-cas-issuer-0.9.0-defaults
+    - kind: ConfigMap
+      name: cert-manager-google-cas-issuer-overrides
+      optional: true

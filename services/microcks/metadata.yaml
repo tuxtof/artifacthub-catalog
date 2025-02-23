@@ -1,0 +1,396 @@
+displayName: microcks
+description: Microcks - API Mocking and Testing
+category:
+- artifact-hub
+type: catalog
+allowMultipleInstances: false
+scope:
+- workspace
+licensing:
+- Ultimate
+- Enterprise
+certifications:
+overview: |
+    # Microcks
+    
+    This chart bootstraps a new [Microcks](http://microcks.io) application using the [Helm](https://helm.sh) package manager.
+    
+    Resources within this directory should work with Helm version 3+ (which do not need the Tiller server-side component).
+    
+    ## Installing the Chart
+    
+    ### Simple install - with no asynchronous mocking
+    
+    From the [Helm Hub](https://hub.helm.sh) directly - assuming here for the example, you are running `minikube`:
+    
+    ```console
+    $ helm repo add microcks https://microcks.io/helm
+    
+    $ kubectl create namespace microcks
+    
+    $ helm install microcks microcks/microcks —-version 1.10.0 --namespace microcks --set microcks.url=microcks.$(minikube ip).nip.io --set keycloak.url=keycloak.$(minikube ip).nip.io --set keycloak.privateUrl=http://microcks-keycloak.microcks.svc.cluster.local:8080
+      
+    NAME: microcks
+    LAST DEPLOYED: Wed Jul 31 17:38:43 2024
+    NAMESPACE: microcks
+    STATUS: deployed
+    REVISION: 1
+    TEST SUITE: None
+    NOTES:
+    Thank you for installing microcks.
+    
+    Your release is named microcks.
+    
+    To learn more about the release, try:
+    
+      $ helm status microcks
+      $ helm get microcks
+    
+    Microcks is available at https://microcks.192.168.64.6.nip.io.
+    
+    GRPC mock service is available at "microcks-grpc.192.168.64.6.nip.io".
+    It has been exposed using TLS passthrough on the Ingress controller, you should extract the certificate for your client using:
+    
+      $ kubectl get secret microcks-microcks-grpc-secret -n microcks -o jsonpath='{.data.tls\.crt}' | base64 -d > tls.crt
+      
+    Keycloak has been deployed on https://keycloak.192.168.64.6.nip.io to protect user access.
+    You may want to configure an Identity Provider or add some users for your Microcks installation by login in using the
+    username and password found into 'microcks-keycloak-admin' secret.
+    ```
+    
+    From the sources cloned locally:
+    
+    ```console
+    $ git clone https://github.com/microcks/microcks
+    
+    $ cd install/kubernetes
+    
+    $ helm install microcks ./microcks --namespace microcks \
+       --set microcks.url=microcks.$(minikube ip).nip.io \
+       --set keycloak.url=keycloak.$(minikube ip).nip.io \
+       --set keycloak.privateUrl=http://microcks-keycloak.microcks.svc.cluster.local:8080
+    
+    NAME: microcks
+    LAST DEPLOYED: Wed Jul 31 18:02:12 2024
+    NAMESPACE: microcks
+    STATUS: deployed
+    REVISION: 1
+    TEST SUITE: None
+    NOTES:
+    Thank you for installing microcks.
+    
+    Your release is named microcks.
+    
+    To learn more about the release, try:
+    
+      $ helm status microcks
+      $ helm get microcks
+    
+    Microcks is available at https://microcks.192.168.64.6.nip.io.
+    
+    GRPC mock service is available at "microcks-grpc.192.168.64.6.nip.io".
+    It has been exposed using TLS passthrough on the Ingress controller, you should extract the certificate for your client using:
+    
+      $ kubectl get secret microcks-microcks-grpc-secret -n  -o jsonpath='{.data.tls\.crt}' | base64 -d > tls.crt
+    
+    Keycloak has been deployed on https://keycloak.192.168.64.6.nip.io to protect user access.
+    You may want to configure an Identity Provider or add some users for your Microcks installation by login in using the
+    username and password found into 'microcks-keycloak-admin' secret.
+    ```
+    
+    ### Advanced install - with asynchronous mocking
+    
+    Microcks supports mocking of event-driven API thanks to [AsyncAPI Spec](https://asyncapi.com). Microcks will take care of publishing sample messages for you on a message broker. You may reuse an existing broker or let Microcks deploy its own (this is the default when turning on this feature).
+    
+    To install a Kafka message broker during its deployment, Microcks relies on [Strimzi Operator](https://strimzi.io) and will try to create such custom resources such as `Kafka` and `KafkaTopic`. When using this configuration, you will thus need to install Strimzi Operator cluster-wide or on targeted namespace.
+    
+    Here are some commands below on how to do that onto a Minikube instance:
+    
+    ```console
+    $ helm repo add strimzi https://strimzi.io/charts/
+    $ helm repo add microcks https://microcks.io/helm
+    
+    $ kubectl create namespace microcks
+    
+    $ helm install strimzi strimzi/strimzi-kafka-operator --namespace microcks
+    
+    $ helm install microcks ./microcks --namespace=microcks \
+        --set appName=microcks --set features.async.enabled=true \
+        --set microcks.url=microcks.$(minikube ip).nip.io \
+        --set keycloak.url=keycloak.$(minikube ip).nip.io \
+        --set keycloak.privateUrl=http://microcks-keycloak.microcks.svc.cluster.local:8080 \
+        --set features.async.kafka.url=$(minikube ip).nip.io 
+    
+    NAME: microcks
+    LAST DEPLOYED: Wed Jul 31 18:27:35 2024
+    NAMESPACE: microcks
+    STATUS: deployed
+    REVISION: 1
+    TEST SUITE: None
+    NOTES:
+    Thank you for installing microcks.
+    
+    Your release is named microcks.
+    
+    To learn more about the release, try:
+    
+      $ helm status microcks
+      $ helm get microcks
+    
+    Microcks is available at https://microcks.192.168.64.6.nip.io.
+    
+    GRPC mock service is available at "microcks-grpc.192.168.64.6.nip.io".
+    It has been exposed using TLS passthrough on the Ingress controller, you should extract the certificate for your client using:
+    
+      $ kubectl get secret microcks-microcks-grpc-secret -n  -o jsonpath='{.data.tls\.crt}' | base64 -d > tls.crt
+    
+    Keycloak has been deployed on https://keycloak.192.168.64.6.nip.io to protect user access.
+    You may want to configure an Identity Provider or add some users for your Microcks installation by login in using the
+    username and password found into 'microcks-keycloak-admin' secret.
+    
+    Kafka broker has been deployed on microcks-kafka.192.168.64.6.nip.io.
+    It has been exposed using TLS passthrough of the Ingress controller, you shoud extract the certificate for your client using:
+    
+      $ kubectl get secret microcks-kafka-cluster-ca-cert -o jsonpath='{.data.ca\.crt}' | base64 -d > ca.crt
+    ```
+    
+    [This video](https://www.youtube.com/watch?v=u7SP1bQ8_FE) details the setup.
+    
+    ## Configuration
+    
+    All configurable variables and default values can be seen in `values.yaml`, with reasonable comments.
+    
+    Typically, you may want to configure the following blocks and options:
+    
+    * Global part is mandatory and contain attributes like `appName` of your install,
+    * `microcks` part is mandatory and contain attributes like the number of `replicas` and the access `url` if you want some customizations,
+    * `postman` part is mandatory for the number of `replicas`
+    * `keycloak` part is optional and allows specifying :
+      * if you want a new install or reuse an existing instance: `keycloak.install`
+      * if you want microcks to delegate authentication to keycloak: `keycloak.enabled`.
+      * Note that `keycloak.enabled=false` forces keycloak not be installed in this release
+    * `mongodb` part is optional and allows specifying if you want a new install or reuse an existing instance.
+    * `features` part is optional and allows enabling and configuring opt-in features of Microcks.
+    
+    The table below describes all the fields of the `values.yaml`, providing information on what's mandatory and what's optional as well as default values.
+    
+    | Section    | Property                    | Description                                                                                                                                                                                                                                                                                                           |
+    |------------|-----------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+    | `<root>`   | `appName`                   | **Mandatory**. Name of the Microcks deployment (Default to `Microcks`)                                                                                                                                                                                                                                                |
+    | `<root>`   | `ingresses`                 | **Mandatory**. Enable or Disable ingresses creation and associated secrets (Default to `true`)                                                                                                                                                                                                                        |
+    | `<root>`   | `commonLabels`              | **Optional**. Defines the list of labels that will be added to all kubernetes resources (Default to `empty`)                                                                                                                                                                                                          |
+    | `<root>`   | `commonAnnotations`         | **Optional**. Defines the list of annotations that will be added to all kubernetes resources (Default to `empty`)                                                                                                                                                                                                     |
+    | `microcks` | `url`                       | **Mandatory**. The URL to use for exposing `Ingress`                                                                                                                                                                                                                                                                  |
+    | `microcks` | `ingressSecretRef`          | **Optional**. The name of a TLS Secret for securing `Ingress`. If missing, self-signed certificate is generated.                                                                                                                                                                                                      |
+    | `microcks` | `ingressAnnotations`        | **Optional**. A map of annotations that will be added to the `Ingress` for Microcks main pod. If these annotations are triggering a Certificate generation (for example through [cert-mamanger.io](https://cert-manager.io/)). The `generateCert` property should be set to `false`.                                  |
+    | `microcks` | `generateCert`              | **Optional**. Whether to generate self-signed certificate or not if no valid `ingressSecretRef` provided. Default is `true`                                                                                                                                                                                           |
+    | `microcks` | `replicas`                  | **Optional**. The number of replicas for the Microcks main pod. Default is `1`.                                                                                                                                                                                                                                       |
+    | `microcks` | `image`                     | **Optional**. The reference of container image used. Chart comes with its default version.                                                                                                                                                                                                                            |
+    | `microcks` | `serviceType`               | **Optional**. The service type used. Defaults to `ClusterIP`.                                                                                                                                                                                                                                                         |
+    | `microcks` | `grpcEnableTLS`             | **Optional**. Flag to disable TLS on gRPC endpoint. Default value is `true`.                                                                                                                                                                                                                                          |
+    | `microcks` | `grpcSecretRef`             | **Optional**. The name of a TLS Secret for securing the gRPC endpoint. If missing, self-signed certificate is generated.                                                                                                                                                                                              |
+    | `microcks` | `grpcIngressAnnotations`    | **Optional**. A map of annotations that will be added to the `Ingress` for Microcks GRPC mocks. This allows you to specify specific ingress class and GRPC specific settings.                                                                                                                                         |
+    | `microcks` | `resources`                 | **Optional**. Some resources constraints to apply on Microcks pods. This should be expressed using [Kubernetes syntax](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#resource-requests-and-limits-of-pod-and-container).                                                             |
+    | `microcks` | `env`                       | **Optional**. Some environment variables to add on Microcks container. This should be expressed using [Kubernetes syntax](https://kubernetes.io/docs/tasks/inject-data-application/define-environment-variable-container/#define-an-environment-variable-for-a-container).                                            |
+    | `microcks` | `logLevel`                  | **Optional**. Allows to tune the verbosity level of logs. Default is `INFO`. You can use `DEBUG` for more verbosity or `WARN` for less.                                                                                                                                                                               |
+    | `microcks` | `mockInvocationStats`       | **Optional**. Allows to disable invocation stats on mocks. Default is `true` (enabled).                                                                                                                                                                                                                               |
+    | `microcks` | `extraProperties`           | **Optional**. Allows to add yaml extra application configurations. Default is `empty` (disabled).                                                                                                                                                                                                                     |
+    | `microcks` | `customSecretRef`           | **Optional**. Permit to use a secret (for exemple a keystore). Default is `false` (disabled).                                                                                                                                                                                                                         |
+    | `postman`  | `replicas`                  | **Optional**. The number of replicas for the Microcks Postman pod. Default is `1`.                                                                                                                                                                                                                                    |
+    | `postman`  | `image`                     | **Optional**. The reference of container image used. Chart comes with its default version.                                                                                                                                                                                                                            |
+    | `postman`  | `resources`                 | **Optional**. Some resources constraints to apply on Postman pods. This should be expressed using [Kubernetes syntax](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#resource-requests-and-limits-of-pod-and-container)..                                                             |
+    | `keycloak` | `enabled`                   | **Optional**. Flag for using Keycloak to protect Microcks API. Default is `true`. Set to `false` if you want to bypass the authorization checks, **this is not recommended for production environment**.                                                                                                              |
+    | `keycloak` | `install`                   | **Optional**. Flag for Keycloak installation. Default is `true`. Set to `false` if you want to reuse an existing Keycloak instance.                                                                                                                                                                                   |
+    | `keycloak` | `realm`                     | **Optional**. Name of Keycloak realm to use. Should be setup only if `install` is `false` and you want to reuse an existing realm. Default is `microcks`.                                                                                                                                                             |
+    | `keycloak` | `url`                       | **Mandatory**. The URL of Keycloak install - indeed just the hostname + port part - if it already exists or the one used for exposing Keycloak `Ingress`.                                                                                                                                                             |
+    | `keycloak` | `privateUrl`                | **Optional**. A private URL - a full URL here - used by the Microcks component to internally join Keycloak. This is also known as `backendUrl` in [Keycloak doc](https://www.keycloak.org/docs/latest/server_installation/#_hostname). When specified, the `keycloak.url` is used as `frontendUrl` in Keycloak terms. |
+    | `keycloak` | `ingressSecretRef`          | **Optional**. The name of a TLS Secret for securing `Ingress`. If missing, self-signed certificate is generated.                                                                                                                                                                                                      |
+    | `keycloak` | `ingressAnnotations`        | **Optional**. A map of annotations that will be added to the `Ingress` for Keycloak pod. If these annotations are triggering a Certificate generation (for example through [cert-mamanger.io](https://cert-manager.io/)). The `generateCert` property should be set to `false`.                                       |
+    | `keycloak` | `generateCert`              | **Optional**. Whether to generate self-signed certificate or not if no valid `ingressSecretRef` provided. Default is `true`                                                                                                                                                                                           |
+    | `keycloak` | `secretRef`                 | **Optional**. Reference of a Secret containing credentials for connecting a provided Keycloak instance. Mandatory if `install` is `false`.                                                                                                                                                                            |
+    | `keycloak` | `pvcAnnotations`            | **Optional**. A map of annotations that will be added to the `pvc` for the Keycloak pod.                                                                                                                                                                                                                              |
+    | `keycloak` | `image`                     | **Optional**. The reference of container image used. Chart comes with its default version.                                                                                                                                                                                                                            |
+    | `keycloak` | `serviceType`               | **Optional**. The service type used. Defaults to `ClusterIP`.                                                                                                                                                                                                                                                         |
+    | `keycloak` | `resources`                 | **Optional**. Some resources constraints to apply on Keycloak pods. This should be expressed using [Kubernetes syntax](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#resource-requests-and-limits-of-pod-and-container).                                                             |
+    | `keycloak` | `persistent`                | **Optional**. Flag for Keycloak persistence. Default is `true`. Set to `false` if you want an ephemeral Keycloak installation.                                                                                                                                                                                        |
+    | `keycloak` | `volumeSize`                | **Optional**. Size of persistent volume claim for Keycloak. Default is `1Gi`. Not used if not persistent install asked.                                                                                                                                                                                               |
+    | `keycloak` | `storageClassName`          | **Optional**. The cluster storage class to use for persistent volume claim. If not specified, we rely on cluster default storage class.                                                                                                                                                                               |
+    | `keycloak` | `postgresImage`             | **Optional**. The reference of container image used. Chart comes with its default version.                                                                                                                                                                                                                            |
+    | `keycloak` | `postgresResources`         | **Optional**. Some resources constraints to apply on Keycloak Postgres pods. This should be expressed using [Kubernetes syntax](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#resource-requests-and-limits-of-pod-and-container).                                                    |
+    | `keycloak` | `serviceAccount`            | **Optional**. A service account to create into Microcks Keycloak realm. Default is `microcks-serviceaccount`.                                                                                                                                                                                                         |
+    | `keycloak` | `serviceAccountCredentials` | **Optional**. The credentials of Keycloak realm service account for Microcks. Default is `ab54d329-e435-41ae-a900-ec6b3fe15c54`.                                                                                                                                                                                      |
+    | `mongodb`  | `install`                   | **Optional**. Flag for MongoDB installation. Default is `true`. Set to `false` if you want to reuse an existing MongoDB instance.                                                                                                                                                                                     |
+    | `mongodb`  | `uri`                       | **Optional**. MongoDB URI in case you're reusing existing MongoDB instance. Mandatory if `install` is `false`.                                                                                                                                                                                                        |
+    | `mongodb`  | `uriParameters`             | **Optional**. Allows you to add parameters to the mongodb uri connection string.                                                                                                                                                                                                                                      |
+    | `mongodb`  | `database`                  | **Optional**. MongoDB database name in case you're reusing existing MongoDB instance. Used if `install` is `false`. Default to `appName`.                                                                                                                                                                             |
+    | `mongodb`  | `secretRef`                 | **Optional**. Reference of a Secret containing credentials for connecting a provided MongoDB instance. Mandatory if `install` is `false`.                                                                                                                                                                             |
+    | `mongodb`  | `pvcAnnotations`            | **Optional**. A map of annotations that will be added to the `pvc` for the MongoDB pod.                                                                                                                                                                                                                               |
+    | `mongodb`  | `resources`                 | **Optional**. Some resources constraints to apply on MongoDB pods. This should be expressed using [Kubernetes syntax](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#resource-requests-and-limits-of-pod-and-container).                                                              |
+    | `mongodb`  | `persistent`                | **Optional**. Flag for MongoDB persistence. Default is `true`. Set to `false` if you want an ephemeral MongoDB installation.                                                                                                                                                                                          |
+    | `mongodb`  | `volumeSize`                | **Optional**. Size of persistent volume claim for MongoDB. Default is `2Gi`. Not used if not persistent install asked.                                                                                                                                                                                                |
+    | `mongodb`  | `storageClassName`          | **Optional**. The cluster storage class to use for persistent volume claim. If not specified, we rely on cluster default storage class.                                                                                                                                                                               |
+    | `features` | `repositoryFilter`          | **Optional**. Feature allowing to filter API and services on main page. Must be explicitly `enabled`. See [Organizing repository](https://microcks.io/documentation/using/advanced/organizing/#master-level-filter) for more information.                                                                             |
+    | `features` | `repositoryTenancy`         | **Optional**. Feature allowing to segment and delegate API and services management according the `repositoryFilter` master criteria. Must be explicitly `enabled`. See [Organizing repository](https://microcks.io/documentation/using/advanced/organizing/#rbac-security-segmentation) for more information.         |
+    | `features` | `microcksHub.enabled`       | **Optional**. Feature allowing to directly import mocks coming from `hub.microcks.io` marketplace. Default is `true`. See [Micorkcs Hub](https://microcks.io/documentation/using/advanced/microcks-hub) for more information.                                                                                         |
+    | `features` | `async.enabled`             | **Optional**. Feature allowing to mock an tests asynchronous APIs through Events. Enabling it requires an active message broker. Default is `false`.                                                                                                                                                                  |
+    | `features` | `async.image`               | **Optional**. The reference of container image used for `async-minion` component. Chart comes with its default version.                                                                                                                                                                                               |
+    | `features` | `async.env`                 | **Optional**. Some environment variables to add on `async-minion` container. This should be expressed using [Kubernetes syntax](https://kubernetes.io/docs/tasks/inject-data-application/define-environment-variable-container/#define-an-environment-variable-for-a-container).                                      |
+    | `features` | `aiCopilot`                 | **Optional**. Feature allowing to activate AI Copilot. Must be explicitly `enabled`. Default is `false`.                                                                                                                                                                                                              |
+    
+    ### AI Copilot feature
+    
+    Here are below the configuration properties of the AI Copilot feature:
+    
+    | Section                     | Property           | Description                                                                                                                               |
+    |-----------------------------| ------------------ |-------------------------------------------------------------------------------------------------------------------------------------------|
+    | `features.aiCopilot`        | `enabled`          | **Optional**. Flag for enabling the feature. Default is `false`. Set to `true` to activate.                                               |
+    | `features.aiCopilot`        | `implementation`   | **Optional**. Allow to choose an AI service implementation. Default is `openai` and its the only supported value at the moment.           |
+    | `features.aiCopilot.openai` | `apiKey`           | **Madantory** when enabled. Put here your OpenAI API key.                                                                                 |
+    | `features.aiCopilot.openai` | `timeout`          | **Optional**. Allow the customization of the timeout when requesting OpenAI. Default to `20` seconds.                                     |
+    | `features.aiCopilot.openai` | `model`            | **Optional**. Allow the customization of the OpenAI model to use. Default may vary from one Microcks version to another.                  |
+    | `features.aiCopilot.openai` | `maxTokens`        | **Optional**. Allow the customization of the maximum number of tokens that may be exchanged by OpenAI services. Default to `2000` tokens? |
+    
+    ### Kafka feature details
+    
+    Here are below the configuration properties of the Kafka support feature:
+    
+    | Section                               | Property                         | Description                                                                                                                                                                                                            |
+    | ------------------------------------- |----------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+    | `features.async.kafka`                | `install`                        | **Optional**. Flag for Kafka installation. Default is `true` and require Strimzi Operator to be setup. Set to `false` if you want to reuse an existing Kafka instance.                                                 |
+    | `features.async.kafka`                | `url`                            | **Optional**. The URL of Kafka broker if it already exists or the one used for exposing Kafka `Ingress` when we install it. In this later case, it should only be the subdomain part (eg: `apps.example.com`).         |
+    | `features.async.kafka`                | `ingressClassName`               | **Optional**. The ingress class to use for exposing broker to the outer world when installing it. Default is `nginx`.                                                                                                  |
+    | `features.async.kafka`                | `persistent`                     | **Optional**. Flag for Kafka persistence. Default is `false`. Set to `true` if you want a persistent Kafka installation.                                                                                               |
+    | `features.async.kafka`                | `volumeSize`                     | **Optional**. Size of persistent volume claim for Kafka. Default is `2Gi`. Not used if not persistent install asked.                                                                                                   |
+    | `features.async.kafka.schemaRegistry` | `url`                            | **Optional**. The API URL of a Kafka Schema Registry. Used for Avro based serialization                                                                                                                                |
+    | `features.async.kafka.schemaRegistry` | `confluent`                      | **Optional**. Flag for indicating that registry is a Confluent one, or using a Confluent compatibility mode. Default to `true`                                                                                         |
+    | `features.async.kafka.schemaRegistry` | `username`                       | **Optional**. Username for connecting to the specified Schema registry. Default to ``                                                                                                                                  |
+    | `features.async.kafka.schemaRegistry` | `credentialsSource`              | **Optional**. Source of the credentials for connecting to the specified Schema registry. Default to `USER_INFO`                                                                                                        |
+    | `features.async.kafka.authentication` | `type`                           | **Optional**. The type of authentication for connecting to a pre-existing Kafka broker. Supports `SSL` or `SASL_SSL`. Default to `none`                                                                                |
+    | `features.async.kafka.authentication` | `truststoreType`                 | **Optional**. For TLS transport, you'll always need a truststore to hold your cluster certificate. Default to `PKCS12`                                                                                                 |
+    | `features.async.kafka.authentication` | `truststoreSecretRef`            | **Optional**. For TLS transport, the reference of a Secret holding truststore and its password. Set `secret`, `storeKey` and `passwordKey` properties                                                                  |
+    | `features.async.kafka.authentication` | `keystoreType`                   | **Optional**. In case of `SSL` type, you'll also need a keystore to hold your user private key for mutual TLS authentication. Default to `PKCS12`                                                                      |
+    | `features.async.kafka.authentication` | `keystoreSecretRef`              | **Optional**. For mutual TLS authentication, the reference of a Secret holding keystore and its password. Set `secret`, `storeKey` and `passwordKey` properties                                                        |
+    | `features.async.kafka.authentication` | `saslMechanism`                  | **Optional**. For SASL authentication, you'll have to specify an additional authentication mechanism such as `SCRAM-SHA-512` or `OAUTHBEARER`                                                                          |
+    | `features.async.kafka.authentication` | `saslJaasConfig`                 | **Optional**. For SASL authentication, you'll have to specify a JAAS configuration line with login module, username and password.                                                                                      |
+    | `features.async.kafka.authentication` | `saslLoginCallbackHandlerClass`  | **Optional**. For SASL authentication, you may want to provide a Login Callback Handler implementations. This implementation may be provided by extending the main and `async-minion` images and adding your own libs. |
+    
+    #### MQTT feature details
+    
+    Here are below the configuration properties of the MQTT support feature:
+    
+    | Section               | Property   | Description                                                                                                                              |
+    | --------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+    | `features.async.mqtt` | `url`      | **Optional**. The URL of MQTT broker (eg: `my-mqtt-broker.example.com:1883`). Default is undefined which means that feature is disabled. |
+    | `features.async.mqtt` | `username` | **Optional**. The username to use for connecting to secured MQTT broker. Default to `microcks`.                                          |
+    | `features.async.mqtt` | `password` | **Optional**. The password to use for connecting to secured MQTT broker. Default to `microcks`.                                          |
+    
+    #### WebSocket feature details
+    
+    Here are below the configuration properties of the WebSocket support feature:
+    
+    | Section             | Property             | Description                                                                                                                                                                                                                                                                                 |
+    | ------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+    | `features.async.ws` | `ingressSecretRef`   | **Optional**. The name of a TLS Secret for securing WebSocket `Ingress`. If missing, self-signed certificate is generated.                                                                                                                                                                  |
+    | `features.async.ws` | `ingressAnnotations` | **Optional**. A map of annotations that will be added to the `Ingress` for Microcks WebSocket mocks. If these annotations are triggering a Certificate generation (for example through [cert-mamanger.io](https://cert-manager.io/)). The `generateCert` property should be set to `false`. |
+    | `features.async.ws` | `generateCert`       | **Optional**. Whether to generate self-signed certificate or not if no valid `ingressSecretRef` provided. Default is `true`                                                                                                                                                                 |
+    
+    #### AMQP feature details
+    
+    Here are below the configuration properties of the AMQP support feature:
+    
+    | Section               | Property   | Description                                                                                                                              |
+    | --------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+    | `features.async.amqp` | `url`      | **Optional**. The URL of AMQP broker (eg: `my-amqp-broker.example.com:5672`). Default is undefined which means that feature is disabled. |
+    | `features.async.amqp` | `username` | **Optional**. The username to use for connecting to secured AMQP broker. Default to `microcks`.                                          |
+    | `features.async.amqp` | `password` | **Optional**. The password to use for connecting to secured AMQP broker. Default to `microcks`.                                          |
+    
+    #### NATS feature details
+    
+    Here are below the configuration properties of the NATS support feature:
+    
+    | Section               | Property   | Description                                                                                                                              |
+    | --------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+    | `features.async.nats` | `url`      | **Optional**. The URL of NATS broker (eg: `my-nats-broker.example.com:4222`). Default is undefined which means that feature is disabled. |
+    | `features.async.nats` | `username` | **Optional**. The username to use for connecting to secured NATS broker. Default to `microcks`.                                          |
+    | `features.async.nats` | `password` | **Optional**. The password to use for connecting to secured NATS broker. Default to `microcks`.                                          |
+    
+    #### Google PubSub feature details
+    
+    Here are below the configuration properties of the Google PubSub support feature:
+    
+    | Section                       | Property  | Description                                                                                                                          |
+    |-------------------------------|-----------|--------------------------------------------------------------------------------------------------------------------------------------|
+    | `features.async.googlepubsub` | `project` | **Optional**. The GCP project id of PubSub (eg: `my-gcp-project-347219`). Default is undefined which means that feature is disabled. |
+    | `features.async.googlepubsub` | `serviceAccountSecretRef` | **Optional**. The name of a Generic Secret holding Service Account JSON credentiels. Set `secret` and `fileKey` properties.          |
+    
+    #### Amazon SQS feature details
+    
+    Here are below the configuration properties of the Amazon SQS support feature:
+    
+    | Section              | Property               | Description                                                                                                                                                                                                                                                                     |
+    |----------------------|------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+    | `features.async.sqs` | `region`               | **Optional**. The AWS region for connecting SQS service (eg: `eu-west-3`). Default is undefined which means that feature is disabled.                                                                                                                                           |
+    | `features.async.sqs` | `credentialsType`      | **Optional**. The type of credentials we use for authentication. 2 options here `env-variable` or `profile`. Default to `env-variable`.                                                                                                                                         |
+    | `features.async.sqs` | `credentialsProfile`   | **Optional**. When using `profile` authent, name of profile to use for authenticating to SQS. This profile should be present into a credentials file mounted from a Secret (see below). Default to `microcks-sqs-admin`.                                                        |
+    | `features.async.sqs` | `credentialsSecretRef` | **Optional**. The name of a Generic Secret holding either environment variables (set `secret` and `accessKeyIdKey`, `secretAccessKeyKey` and optional `sessionTokenKey` properties) or an AWS credentials file with referenced profile (set `secret` and `fileKey` properties). |
+    | `features.async.sqs` | `endpointOverride`     | **Optional**. The AWS endpoint URI used for API calls. Handy for using SQS via [LocalStack](https://localstack.cloud).                                                                                                                                                          |
+    
+    #### Amazon SNS feature details
+    
+    Here are below the configuration properties of the Amazon SNS support feature:
+    
+    | Section              | Property               | Description                                                                                                                                                                                                                                                                     |
+    |----------------------|------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+    | `features.async.sns` | `region`               | **Optional**. The AWS region for connecting SNS service (eg: `eu-west-3`). Default is undefined which means that feature is disabled.                                                                                                                                           |
+    | `features.async.sns` | `credentialsType`      | **Optional**. The type of credentials we use for authentication. 2 options here `env-variable` or `profile`. Default to `env-variable`.                                                                                                                                         |
+    | `features.async.sns` | `credentialsProfile`   | **Optional**. When using `profile` authent, name of profile to use for authenticating to SQS. This profile should be present into a credentials file mounted from a Secret (see below). Default to `microcks-sns-admin`.                                                        |
+    | `features.async.sns` | `credentialsSecretRef` | **Optional**. The name of a Generic Secret holding either environment variables (set `secret` and `accessKeyIdKey`, `secretAccessKeyKey` and optional `sessionTokenKey` properties) or an AWS credentials file with referenced profile (set `secret` and `fileKey` properties). |
+    | `features.async.sns` | `endpointOverride`     | **Optional**. The AWS endpoint URI used for API calls. Handy for using SNS via [LocalStack](https://localstack.cloud).                                                                                                                                                          |
+    
+    > **Note:** Enabling both SQS and SNS features and using `env-variable` credentials type for both, may lead to collision as both clients rely on the
+    > same environment variables. So you have to specify `credentialsSecretRef` on only one of those two services and be sure that the access key and secret
+    > access key mounted refers to a IAM account having write access to both services.
+    
+    ### Examples
+    
+    You may want to launch custom installation with such a command:
+    
+     ```console
+     $ helm install microcks ./microcks --namespace=microcks \
+        --set appName=mocks --set mongodb.volumeSize=5Gi \
+        --set microcks.url=mocks-microcks.apps.example.com \
+        --set keycloak.url=keycloak-microcks.apps.example.com
+     ```
+    
+    or - with included Kafka for async mocking turned on:
+    
+     ```console
+     $ helm install microcks ./microcks --namespace=microcks \
+        --set appName=microcks --set features.async.enabled=true \
+        --set microcks.url=microcks.$(minikube ip).nip.io \
+        --set keycloak.url=keycloak.$(minikube ip).nip.io \
+        --set features.async.kafka.url=$(minikube ip).nip.io
+     ```
+    
+    ## Checking everything is OK
+    
+    Just check you've got this 5 running pods:
+    
+    ```console
+    $ kubectl get pods -n microcks
+    NAME                                            READY   STATUS    RESTARTS   AGE
+    microcks-7f8445887d-f7wt9                       1/1     Running   0          39s
+    microcks-keycloak-bbbfcb-8flrr                  1/1     Running   0          39s
+    microcks-keycloak-postgresql-6dc77c4968-5dcjd   1/1     Running   0          39s
+    microcks-mongodb-6d558666dc-zdhxl               1/1     Running   0          39s
+    microcks-postman-runtime-58bf695b59-nm858       1/1     Running   0          39s
+    ```
+    
+    ## Deleting the Chart
+    
+    ```console
+    helm delete microcks
+    helm del --purge microcks
+    ```
+    
+icon: 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

@@ -1,0 +1,210 @@
+displayName: open-feature-operator
+description: A feature flag operator for Kubernetes
+category:
+- artifact-hub
+type: catalog
+allowMultipleInstances: false
+scope:
+- workspace
+licensing:
+- Ultimate
+- Enterprise
+certifications:
+overview: |
+    # OpenFeature Operator
+    
+    ## TL;DR
+    
+    > This helm chart has a dependency on [cert manager](https://cert-manager.io/docs/installation/)
+    
+    ```
+    helm repo add openfeature https://open-feature.github.io/open-feature-operator/
+    helm repo update
+    helm upgrade --install open-feature-operator openfeature/open-feature-operator
+    ```
+    
+    ## Introduction
+    
+    The OpenFeature Operator is a Kubernetes native operator that allows you to expose feature flags to your applications. It injects a [flagd](https://github.com/open-feature/flagd) sidecar into your pod and allows you to poll the flagd server for feature flags in a variety of ways.
+    The full documentation for this project can be found here: [OpenFeature Operator](https://github.com/open-feature/open-feature-operator/tree/main/docs)
+    
+    ## Prerequisites
+    
+    The OpenFeature Operator requires [cert manager](https://cert-manager.io/docs/installation/) to be installed on the target cluster.
+    
+    ## Install
+    
+    To install the chart with the release name `open-feature-operator`:
+    
+    ```
+    helm repo add openfeature https://open-feature.github.io/open-feature-operator/
+    helm repo update
+    helm upgrade --install open-feature-operator openfeature/open-feature-operator
+    ```
+    
+    This installation will use the default helm configuration, described in the [Configuration section](#configuration)
+    To overwrite these default values use the `--set` flag when calling `helm upgrade` or `helm install`, for example:
+    
+    ```
+    helm upgrade -i open-feature-operator ./chart/open-feature-operator --set sidecarConfiguration.port=8080 --set controllerManager.kubeRbacProxy.resources.limits.cpu=400m
+    ```
+    
+    ## Upgrade
+    
+    To install the chart with the release name `open-feature-operator`:
+    
+    ```sh
+    helm repo update
+    helm upgrade --install open-feature-operator openfeature/open-feature-operator
+    ```
+    
+    > [!NOTE]
+    > If you upgrade to OFO `v0.5.4` or higher while using a `flagd-proxy` provider, the instance of
+    `flagd-proxy` will be automatically upgraded to the latest supported version by the `open-feature-operator`.
+    The upgrade of `flagd-proxy` will also consider your current `FeatureFlagSource` configuration and adapt
+    the `flagd-proxy` Deployment accordingly.
+    If you are upgrading OFO to `v0.5.3` or lower, `flagd-proxy` (if present) won't be upgraded automatically.
+    
+    #### Upgrade CRDs
+    
+    CRDs are not upgraded automatically with helm (https://helm.sh/docs/chart_best_practices/custom_resource_definitions/).
+    OpenFeature Operator's CRDs are templated, and can be updated apart from the operator itself by using helm's template functionality and piping the output to `kubectl`:
+    
+    ```console
+    helm template openfeature/open-feature-operator -s templates/{CRD} | kubectl apply -f -
+    ```
+    
+    For the `featureflags.core.openfeature.dev` CRD:
+    
+    ```sh
+    helm template openfeature/open-feature-operator -s templates/apiextensions.k8s.io_v1_customresourcedefinition_featureflags.core.openfeature.dev.yaml | kubectl apply -f -
+    ```
+    
+    For the `featureflagsources.core.openfeature.dev` CRD:
+    
+    ```sh
+    helm template openfeature/open-feature-operator -s templates/apiextensions.k8s.io_v1_customresourcedefinition_featureflagsources.core.openfeature.dev.yaml | kubectl apply -f -
+    ```
+    
+    Keep in mind, you can set values as usual during this process:
+    
+    ```console
+    helm template openfeature/open-feature-operator -s templates/{CRD} --set defaultNamespace=myns | kubectl apply -f -
+    ```
+    
+    ## Uninstall
+    
+    To uninstall the `open-feature-operator`:
+    
+    ```
+    helm uninstall open-feature-operator
+    ```
+    
+    The command removes all the Kubernetes components associated with the chart and deletes the release.
+    
+    ## Configuration
+    
+    ### Global
+    
+    | Name               | Description                                                                                                                                                                                                  | Value                          |
+    | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------ |
+    | `defaultNamespace` | To override the namespace use the `--namespace` flag. This default is provided to ensure that the kustomize build charts in `/templates` deploy correctly when no `namespace` is provided via the `-n` flag. | `open-feature-operator-system` |
+    
+    ### namespace
+    
+    | Name                    | Description                                                                                                                                                                                                                               | Value  |
+    | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+    | `namespace.create`      | Whether to create the namespace as part of this chart.                                                                                                                                                                                    | `true` |
+    | `namespace.labels`      | Labels for the namespace if created as part of the chart.                                                                                                                                                                                 | `{}`   |
+    | `namespace.annotations` | Annotations for the namespace if created as part of the chart.                                                                                                                                                                            | `{}`   |
+    | `imagePullSecrets`      | Array of ImagePullSecret objects containing credentials for images pulled by the operator (flagdProxyConfiguration.image, flagdConfiguration.image, controllerManager.manager.image). Example: imagePullSecrets: [{"name": "my-secret"}]  | `[]`   |
+    | `labels`                | Labels to apply to all of the pods in the operator.                                                                                                                                                                                       | `{}`   |
+    | `annotations`           | Annotations to apply to all of the pods in the operator.                                                                                                                                                                                  | `{}`   |
+    
+    ### Mutating Webhook configuration
+    
+    | Name                             | Description                                               | Value    |
+    | -------------------------------- | --------------------------------------------------------- | -------- |
+    | `mutatingWebhook.failurePolicy`  | FailurePolicy when the webhook does not respond           | `Ignore` |
+    | `mutatingWebhook.objectSelector` | ObjectSelector on which pods the mutatingWebhook will run | `{}`     |
+    
+    ### Sidecar configuration
+    
+    | Name                                             | Description                                                                                                                                                                                                                                                 | Value                        |
+    | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
+    | `sidecarConfiguration.port`                      | Sets the value of the `XXX_PORT` environment variable for the injected sidecar.                                                                                                                                                                             | `8013`                       |
+    | `sidecarConfiguration.managementPort`            | Sets the value of the `XXX_MANAGEMENT_PORT` environment variable for the injected sidecar.                                                                                                                                                                  | `8014`                       |
+    | `sidecarConfiguration.socketPath`                | Sets the value of the `XXX_SOCKET_PATH` environment variable for the injected sidecar.                                                                                                                                                                      | `""`                         |
+    | `sidecarConfiguration.image.repository`          | Sets the image for the injected sidecar.                                                                                                                                                                                                                    | `ghcr.io/open-feature/flagd` |
+    | `sidecarConfiguration.image.tag`                 | Sets the version tag for the injected sidecar.                                                                                                                                                                                                              | `v0.12.0`                    |
+    | `sidecarConfiguration.providerArgs`              | Used to append arguments to the sidecar startup command. This value is a comma separated string of key values separated by '=', e.g. `key=value,key2=value2` results in the appending of `--sync-provider-args key=value --sync-provider-args key2=value2`. | `""`                         |
+    | `sidecarConfiguration.envVarPrefix`              | Sets the prefix for all environment variables set in the injected sidecar.                                                                                                                                                                                  | `FLAGD`                      |
+    | `sidecarConfiguration.defaultSyncProvider`       | Sets the value of the `XXX_SYNC_PROVIDER` environment variable for the injected sidecar container. There are 4 valid sync providers: `kubernetes`, `grpc`, `file` and `http`.                                                                               | `kubernetes`                 |
+    | `sidecarConfiguration.evaluator`                 | Sets the value of the `XXX_EVALUATOR` environment variable for the injected sidecar container.                                                                                                                                                              | `json`                       |
+    | `sidecarConfiguration.logFormat`                 | Sets the value of the `XXX_LOG_FORMAT` environment variable for the injected sidecar container. There are 2 valid log formats: `json` and `console`.                                                                                                        | `json`                       |
+    | `sidecarConfiguration.probesEnabled`             | Enable or Disable Liveness and Readiness probes of the flagd sidecar. When enabled, HTTP probes( paths - `/readyz`, `/healthz`) are set with an initial delay of 5 seconds.                                                                                 | `true`                       |
+    | `sidecarConfiguration.debugLogging`              | Controls the addition of the `--debug` flag to the container startup arguments.                                                                                                                                                                             | `false`                      |
+    | `sidecarConfiguration.otelCollectorUri`          | Otel exporter uri.                                                                                                                                                                                                                                          | `""`                         |
+    | `sidecarConfiguration.resources.limits.cpu`      | Sets cpu resource limits for kube-rbac-proxy.                                                                                                                                                                                                               | `500m`                       |
+    | `sidecarConfiguration.resources.limits.memory`   | Sets memory resource limits for kube-rbac-proxy.                                                                                                                                                                                                            | `64Mi`                       |
+    | `sidecarConfiguration.resources.requests.cpu`    | Sets cpu resource requests for kube-rbac-proxy.                                                                                                                                                                                                             | `200m`                       |
+    | `sidecarConfiguration.resources.requests.memory` | Sets memory resource requests for kube-rbac-proxy.                                                                                                                                                                                                          | `32Mi`                       |
+    
+    ### In-process configuration
+    
+    | Name                                           | Description                                                                                       | Value       |
+    | ---------------------------------------------- | ------------------------------------------------------------------------------------------------- | ----------- |
+    | `inProcessConfiguration.port`                  | Sets the value of the `XXX_PORT` environment variable for the pod containers.                     | `8015`      |
+    | `inProcessConfiguration.host`                  | Sets the value of the `XXX_HOST` environment variable for the pod containers.                     | `localhost` |
+    | `inProcessConfiguration.socketPath`            | Sets the value of the `XXX_SOCKET_PATH` environment variable for the pod containers.              | `""`        |
+    | `inProcessConfiguration.tls`                   | Sets the value of the `XXX_TLS` environment variable for the pod containers.                      | `false`     |
+    | `inProcessConfiguration.offlineFlagSourcePath` | Sets the value of the `XXX_OFFLINE_FLAG_SOURCE_PATH` environment variable for the pod containers. | `""`        |
+    | `inProcessConfiguration.selector`              | Sets the value of the `XXX_SELECTOR` environment variable for the pod containers.                 | `""`        |
+    | `inProcessConfiguration.envVarPrefix`          | Sets the value of the `XXX_ENV_VAR_PREFIX` environment variable for the pod containers.           | `FLAGD`     |
+    | `inProcessConfiguration.cache.type`            | Sets the value of the `XXX_CACHE` environment variable for the pod containers.                    | `lru`       |
+    | `inProcessConfiguration.cache.size`            | Sets the value of the `XXX_CACHE_MAX_SIZE` environment variable for the pod containers.           | `1000`      |
+    
+    ### Flagd-proxy configuration
+    
+    | Name                                       | Description                                                                     | Value                              |
+    | ------------------------------------------ | ------------------------------------------------------------------------------- | ---------------------------------- |
+    | `flagdProxyConfiguration.replicaCount`     | sets the number of replicas for the flagd-proxy deployment.                     | `1`                                |
+    | `flagdProxyConfiguration.port`             | Sets the port to expose the sync API on.                                        | `8015`                             |
+    | `flagdProxyConfiguration.managementPort`   | Sets the port to expose the management API on.                                  | `8016`                             |
+    | `flagdProxyConfiguration.image.repository` | Sets the image for the flagd-proxy deployment.                                  | `ghcr.io/open-feature/flagd-proxy` |
+    | `flagdProxyConfiguration.image.tag`        | Sets the tag for the flagd-proxy deployment.                                    | `v0.7.0`                           |
+    | `flagdProxyConfiguration.debugLogging`     | Controls the addition of the `--debug` flag to the container startup arguments. | `false`                            |
+    
+    ### Flagd configuration
+    
+    | Name                                  | Description                                                                     | Value                        |
+    | ------------------------------------- | ------------------------------------------------------------------------------- | ---------------------------- |
+    | `flagdConfiguration.port`             | Sets the port to expose the flagd API on.                                       | `8013`                       |
+    | `flagdConfiguration.ofrepPort`        | Sets the port to expose the ofrep API on.                                       | `8016`                       |
+    | `flagdConfiguration.syncPort`         | Sets the port to expose the sync API on.                                        | `8015`                       |
+    | `flagdConfiguration.managementPort`   | Sets the port to expose the management API on.                                  | `8014`                       |
+    | `flagdConfiguration.image.repository` | Sets the image for the flagd deployment.                                        | `ghcr.io/open-feature/flagd` |
+    | `flagdConfiguration.image.tag`        | Sets the tag for the flagd deployment.                                          | `v0.12.0`                    |
+    | `flagdConfiguration.debugLogging`     | Controls the addition of the `--debug` flag to the container startup arguments. | `false`                      |
+    
+    ### Operator resource configuration
+    
+    | Name                                                                      | Description                                                                                                      | Value                                        |
+    | ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+    | `controllerManager.manager.image.repository`                              | Sets the image for the operator.                                                                                 | `ghcr.io/open-feature/open-feature-operator` |
+    | `controllerManager.manager.image.tag`                                     | Sets the version tag for the operator.                                                                           | `v0.8.5`                                     |
+    | `controllerManager.manager.resources.limits.cpu`                          | Sets cpu resource limits for operator.                                                                           | `500m`                                       |
+    | `controllerManager.manager.resources.limits.memory`                       | Sets memory resource limits for operator.                                                                        | `128Mi`                                      |
+    | `controllerManager.manager.resources.requests.cpu`                        | Sets cpu resource requests for operator.                                                                         | `10m`                                        |
+    | `controllerManager.manager.resources.requests.memory`                     | Sets memory resource requests for operator.                                                                      | `64Mi`                                       |
+    | `controllerManager.manager.hostNetwork`                                   | Should the injector pods run on the host network (useful when using an alternate CNI in EKS)                     | `false`                                      |
+    | `controllerManager.manager.dnsPolicy`                                     | Pod DNS resolution scheme. Should be `ClusterFirstWithHostNet` if hostNetwork is true, `ClusterFirst` otherwise. | `ClusterFirst`                               |
+    | `controllerManager.replicas`                                              | Sets number of replicas of the OpenFeature operator pod.                                                         | `1`                                          |
+    | `managerConfig.flagsValidationEnabled`                                    | Enables the validating webhook for FeatureFlag CR.                                                               | `true`                                       |
+    | `managerConfig.controllerManagerConfigYaml.health.healthProbeBindAddress` | Sets the bind address for health probes.                                                                         | `:8081`                                      |
+    | `managerConfig.controllerManagerConfigYaml.metrics.bindAddress`           | Sets the bind address for metrics (combined with bindPort).                                                      | `127.0.0.1`                                  |
+    | `managerConfig.controllerManagerConfigYaml.metrics.bindPort`              | Sets the bind port for metrics.                                                                                  | `8080`                                       |
+    | `managerConfig.controllerManagerConfigYaml.webhook.port`                  | Sets the bind address for webhook.                                                                               | `9443`                                       |
+    
+    
+icon: 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

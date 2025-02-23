@@ -1,0 +1,25 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: limitador-operator
+  namespace: ${releaseNamespace}
+spec:
+  chart:
+    spec:
+      chart: limitador-operator
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: kuadrant
+        namespace: ${releaseNamespace}
+      version: 0.13.0-alpha1
+  interval: 1m0s
+  targetNamespace: ${releaseNamespace}
+  releaseName: limitador-operator
+  valuesFrom:
+    - kind: ConfigMap
+      name: limitador-operator-0.13.0-alpha1-defaults
+    - kind: ConfigMap
+      name: limitador-operator-overrides
+      optional: true

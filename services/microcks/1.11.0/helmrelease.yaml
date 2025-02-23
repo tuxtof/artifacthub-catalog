@@ -1,0 +1,25 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: microcks
+  namespace: ${releaseNamespace}
+spec:
+  chart:
+    spec:
+      chart: microcks
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: microcks
+        namespace: ${releaseNamespace}
+      version: 1.11.0
+  interval: 1m0s
+  targetNamespace: ${releaseNamespace}
+  releaseName: microcks
+  valuesFrom:
+    - kind: ConfigMap
+      name: microcks-1.11.0-defaults
+    - kind: ConfigMap
+      name: microcks-overrides
+      optional: true

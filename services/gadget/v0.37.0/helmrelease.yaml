@@ -1,0 +1,25 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: gadget
+  namespace: ${releaseNamespace}
+spec:
+  chart:
+    spec:
+      chart: gadget
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: gadget
+        namespace: ${releaseNamespace}
+      version: 0.37.0
+  interval: 1m0s
+  targetNamespace: ${releaseNamespace}
+  releaseName: gadget
+  valuesFrom:
+    - kind: ConfigMap
+      name: gadget-0.37.0-defaults
+    - kind: ConfigMap
+      name: gadget-overrides
+      optional: true

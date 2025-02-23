@@ -1,0 +1,138 @@
+displayName: openebs
+description: Containerized Attached Storage for Kubernetes
+category:
+- artifact-hub
+type: catalog
+allowMultipleInstances: false
+scope:
+- workspace
+licensing:
+- Ultimate
+- Enterprise
+certifications:
+overview: |
+    # OpenEBS Helm Repository
+    
+    <img width="200" align="right" alt="OpenEBS Logo" src="https://raw.githubusercontent.com/cncf/artwork/master/projects/openebs/stacked/color/openebs-stacked-color.png" xmlns="http://www.w3.org/1999/html">
+    
+    [OpenEBS](https://openebs.io) helps Developers and Platform SREs easily deploy Kubernetes Stateful Workloads that require fast and highly reliable container attached storage. OpenEBS can be deployed on any Kubernetes cluster - either in cloud, on-premise (virtual or bare metal) or developer system (minikube).
+    
+    OpenEBS Data Engines and Control Plane are implemented as micro-services, deployed as containers and orchestrated by Kubernetes itself. An added advantage of being a completely Kubernetes native solution is that administrators and developers can interact and manage OpenEBS using all the wonderful tooling that is available for Kubernetes like kubectl, Helm, Prometheus, Grafana, etc.
+    
+    OpenEBS turns any storage available on the Kubernetes worker nodes into local or distributed Kubernetes Persistent Volumes.
+    
+    #### Local PV
+    
+    Local Volumes are accessible only from a single node in the cluster. Pods using Local Volume have to be scheduled on the node where volume is provisioned. Local Volumes are typically preferred for distributed workloads like Cassandra, MongoDB, Elastic, etc that are distributed in nature and have high availability built into them. Depending on the type of storage attached to the Kubernetes worker, OpenEBS offers different flavors of Local PV - Hostpath, LVM and ZFS.
+    
+    #### Replicated PV
+    
+    Replicated Volumes as the name suggests, are those that have their data synchronously replicated to multiple nodes. Volumes can sustain node failures. The replication also can be setup across availability zones helping applications move across availability zones. OpenEBS offers Replicated PV Mayastor as an replicated storage solution, which provides high availability and high performance.
+    
+    ## Documentation and user guides
+    
+    OpenEBS can run on any Kubernetes 1.23+ cluster in a matter of minutes. See the [Quickstart Guide to OpenEBS](https://openebs.io/docs/quickstart-guide/installation) for detailed instructions.
+    
+    ## Getting started
+    
+    ### How to customize OpenEBS Helm chart?
+    
+    OpenEBS Helm chart is a unified Helm chart that pulls together engine specific charts. The engine charts are included as [dependencies](https://github.com/openebs/openebs/tree/HEAD/charts/Chart.yaml).
+    
+    ```bash
+    openebs
+    ├── (default) Local PV HostPath
+    ├── (default) Local PV LVM
+    ├── (default) Local PV ZFS
+    └── (default) Replicated PV Mayastor
+    ```
+    
+    ### Prerequisites
+    
+    - [Local PV Hostpath Prerequisites](https://openebs.io/docs/user-guides/local-storage-user-guide/local-pv-hostpath/hostpath-installation#prerequisites)
+    - [Local PV LVM Prerequisites](https://openebs.io/docs/user-guides/local-storage-user-guide/local-pv-lvm/lvm-installation#prerequisites)
+    - [Local PV ZFS Prerequisites](https://openebs.io/docs/user-guides/local-storage-user-guide/local-pv-zfs/zfs-installation#prerequisites)
+    - [Replicated PV Mayastor Prerequisites](https://openebs.io/docs/user-guides/replicated-storage-user-guide/replicated-pv-mayastor/rs-installation#prerequisites)
+    
+    ### Setup Helm Repository
+    
+    Before installing OpenEBS Helm chart, the [OpenEBS Helm repository](https://openebs.github.io/openebs) needs to be added to the Helm client.
+    
+    #### Setup Helm repository
+    
+    ```bash
+    helm repo add openebs https://openebs.github.io/openebs
+    helm repo update
+    ```
+    
+    #### Install OpenEBS Helm chart with default values.
+    
+    ```bash
+    helm install openebs --namespace openebs openebs/openebs --create-namespace
+    ```
+    
+    The above commands will install OpenEBS LocalPV Hostpath, OpenEBS LocalPV LVM, OpenEBS LocalPV ZFS and OpenEBS Mayastor components in openebs namespace with chart name as openebs. 
+    
+    Replicated PV Mayastor can be excluded during the installation with the following command:
+    
+    ```bash
+    helm install openebs --namespace openebs openebs/openebs --set engines.replicated.mayastor.enabled=false --create-namespace
+    ```
+    
+    To view the chart and get the following output.
+    
+    ```bash
+    helm ls -n openebs 
+    
+    NAME    NAMESPACE       REVISION        UPDATED                                 STATUS          CHART           APP VERSION
+    openebs openebs         1               2025-01-10 09:13:00.903321318 +0000 UTC deployed        openebs-4.1.3   4.1.3
+    ```
+    
+    As a next step [verify the installation](https://openebs.io/docs/quickstart-guide/installation#verifying-openebs-installation) and do the [post installation](https://openebs.io/docs/quickstart-guide/installation#post-installation-considerations) steps.
+    
+    For more details on customizing and installing OpenEBS please see the [chart values](https://github.com/openebs/openebs/tree/HEAD/charts/README.md).
+    
+    ### To uninstall/delete instance with release name
+    
+    ```bash
+    helm ls --all
+    helm delete `<RELEASE NAME>` -n `<RELEASE NAMESPACE>`
+    ```
+    
+    > **Tip**: Prior to deleting the Helm chart, make sure all the storage volumes and pools are deleted.
+    
+    ## Requirements
+    
+    | Repository | Name | Version |
+    |------------|------|---------|
+    |  | openebs-crds | 4.1.3 |
+    | https://openebs.github.io/dynamic-localpv-provisioner | localpv-provisioner | 4.1.4 |
+    | https://openebs.github.io/lvm-localpv | lvm-localpv | 1.6.2 |
+    | https://openebs.github.io/mayastor-extensions | mayastor | 2.7.3 |
+    | https://openebs.github.io/zfs-localpv | zfs-localpv | 2.6.2 |
+    
+    ## Values
+    
+    | Key | Type | Default | Description |
+    |-----|------|---------|-------------|
+    | engines.local.lvm.enabled | bool | `true` |  |
+    | engines.local.zfs.enabled | bool | `true` |  |
+    | engines.replicated.mayastor.enabled | bool | `true` |  |
+    | localpv-provisioner.rbac.create | bool | `true` |  |
+    | lvm-localpv.crds.csi.volumeSnapshots.enabled | bool | `false` |  |
+    | lvm-localpv.crds.lvmLocalPv.enabled | bool | `true` |  |
+    | mayastor.crds.csi.volumeSnapshots.enabled | bool | `false` |  |
+    | mayastor.csi.node.initContainers.enabled | bool | `true` |  |
+    | mayastor.etcd.clusterDomain | string | `"cluster.local"` | Kubernetes Cluster Domain |
+    | mayastor.localpv-provisioner.enabled | bool | `false` |  |
+    | openebs-crds.csi.volumeSnapshots.enabled | bool | `true` |  |
+    | openebs-crds.csi.volumeSnapshots.keep | bool | `true` |  |
+    | preUpgradeHook | object | `{"image":{"pullPolicy":"IfNotPresent","registry":"docker.io","repo":"bitnami/kubectl","tag":"1.25.15"}}` | Configuration options for pre-upgrade helm hook job. |
+    | preUpgradeHook.image.pullPolicy | string | `"IfNotPresent"` | The imagePullPolicy for the container |
+    | preUpgradeHook.image.registry | string | `"docker.io"` | The container image registry URL for the hook job |
+    | preUpgradeHook.image.repo | string | `"bitnami/kubectl"` | The container repository for the hook job |
+    | preUpgradeHook.image.tag | string | `"1.25.15"` | The container image tag for the hook job |
+    | zfs-localpv.crds.csi.volumeSnapshots.enabled | bool | `false` |  |
+    | zfs-localpv.crds.zfsLocalPv.enabled | bool | `true` |  |
+    
+icon: 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

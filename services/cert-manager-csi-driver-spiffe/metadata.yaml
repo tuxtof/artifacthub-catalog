@@ -1,0 +1,537 @@
+displayName: cert-manager-csi-driver-spiffe
+description: csi-driver-spiffe is a Kubernetes CSI plugin which transparently delivers X.509 SPIFFE SVIDs to pods via cert-manager
+category:
+- artifact-hub
+type: catalog
+allowMultipleInstances: false
+scope:
+- workspace
+licensing:
+- Ultimate
+- Enterprise
+certifications:
+overview: |
+    # cert-manager csi-driver-spiffe
+    
+    <!-- see https://artifacthub.io/packages/helm/cert-manager/cert-manager-csi-driver-spiffe for the rendered version -->
+    
+    ## Helm Values
+    
+    <!-- AUTO-GENERATED -->
+    
+    #### **image.registry** ~ `string`
+    
+    Target image registry. This value is prepended to the target image repository, if set.  
+    For example:
+    
+    ```yaml
+    registry: quay.io
+    repository:
+      driver: jetstack/cert-manager-csi-driver-spiffe
+      approver: jetstack/cert-manager-csi-driver-spiffe-approver
+    ```
+    
+    #### **image.repository.driver** ~ `string`
+    > Default value:
+    > ```yaml
+    > quay.io/jetstack/cert-manager-csi-driver-spiffe
+    > ```
+    
+    Target image repository for the csi-driver driver DaemonSet.
+    #### **image.repository.approver** ~ `string`
+    > Default value:
+    > ```yaml
+    > quay.io/jetstack/cert-manager-csi-driver-spiffe-approver
+    > ```
+    
+    Target image repository for the csi-driver approver Deployment.
+    #### **image.tag** ~ `string`
+    
+    Override the image tag to deploy by setting this variable. If no value is set, the chart's appVersion is used.
+    
+    #### **image.digest** ~ `object`
+    > Default value:
+    > ```yaml
+    > {}
+    > ```
+    #### **image.digest.driver** ~ `string`
+    
+    Target csi-driver driver digest. Override any tag, if set.  
+    For example:
+    
+    ```yaml
+    driver: sha256:0e072dddd1f7f8fc8909a2ca6f65e76c5f0d2fcfb8be47935ae3457e8bbceb20
+    ```
+    
+    #### **image.digest.approver** ~ `string`
+    
+    Target csi-driver approver digest. Override any tag, if set.  
+    For example:
+    
+    ```yaml
+    approver: sha256:0e072dddd1f7f8fc8909a2ca6f65e76c5f0d2fcfb8be47935ae3457e8bbceb20
+    ```
+    
+    #### **image.pullPolicy** ~ `string`
+    > Default value:
+    > ```yaml
+    > IfNotPresent
+    > ```
+    
+    Kubernetes imagePullPolicy on DaemonSet.
+    #### **imagePullSecrets** ~ `array`
+    > Default value:
+    > ```yaml
+    > []
+    > ```
+    
+    Optional secrets used for pulling the csi-driver-spiffe and csi-driver-spiffe-approver container images  
+      
+    For example:
+    
+    ```yaml
+    imagePullSecrets:
+    - name: secret-name
+    ```
+    #### **app.logLevel** ~ `number`
+    > Default value:
+    > ```yaml
+    > 1
+    > ```
+    
+    Verbosity of cert-manager-csi-driver logging.
+    #### **app.certificateRequestDuration** ~ `string`
+    > Default value:
+    > ```yaml
+    > 1h
+    > ```
+    
+    Duration requested for requested certificates.
+    #### **app.runtimeIssuanceConfigMap** ~ `string`
+    > Default value:
+    > ```yaml
+    > ""
+    > ```
+    
+    Name of a ConfigMap in the installation namespace to watch, providing runtime configuration of an issuer to use.  
+      
+    The "issuer-name", "issuer-kind" and "issuer-group" keys must be present in the ConfigMap for it to be used.
+    #### **app.extraCertificateRequestAnnotations** ~ `unknown`
+    > Default value:
+    > ```yaml
+    > null
+    > ```
+    
+    List of annotations to add to certificate requests  
+      
+    For example:
+    
+    ```yaml
+    extraCertificateRequestAnnotations: app=csi-driver-spiffe,foo=bar
+    ```
+    #### **app.trustDomain** ~ `string`
+    > Default value:
+    > ```yaml
+    > cluster.local
+    > ```
+    
+    The Trust Domain for this driver.
+    #### **app.name** ~ `string`
+    > Default value:
+    > ```yaml
+    > spiffe.csi.cert-manager.io
+    > ```
+    
+    The name for the CSI driver installation.
+    #### **app.issuer.name** ~ `string`
+    > Default value:
+    > ```yaml
+    > spiffe-ca
+    > ```
+    
+    Issuer name which is used to serve this Trust Domain.
+    #### **app.issuer.kind** ~ `string`
+    > Default value:
+    > ```yaml
+    > ClusterIssuer
+    > ```
+    
+    Issuer kind which is used to serve this Trust Domain.
+    #### **app.issuer.group** ~ `string`
+    > Default value:
+    > ```yaml
+    > cert-manager.io
+    > ```
+    
+    Issuer group which is used to serve this Trust Domain.
+    #### **app.driver.sourceCABundle** ~ `unknown`
+    > Default value:
+    > ```yaml
+    > null
+    > ```
+    
+    Optional file containing a CA bundle that will be propagated to managed volumes.
+    #### **app.driver.volumeFileName.cert** ~ `string`
+    > Default value:
+    > ```yaml
+    > tls.crt
+    > ```
+    
+    File name which signed certificates are written to in volumes.
+    #### **app.driver.volumeFileName.key** ~ `string`
+    > Default value:
+    > ```yaml
+    > tls.key
+    > ```
+    
+    File name which private keys are written to in volumes.
+    #### **app.driver.volumeFileName.ca** ~ `string`
+    > Default value:
+    > ```yaml
+    > ca.crt
+    > ```
+    
+    File name where the CA bundles are written to, if enabled.
+    #### **app.driver.volumes** ~ `array`
+    > Default value:
+    > ```yaml
+    > []
+    > ```
+    
+    Optional extra volumes. Useful for mounting root CAs  
+      
+    For example:
+    
+    ```yaml
+    volumes:
+    - name: root-cas
+      secret:
+        secretName: root-ca-bundle
+    ```
+    #### **app.driver.volumeMounts** ~ `array`
+    > Default value:
+    > ```yaml
+    > []
+    > ```
+    
+    Optional extra volume mounts. Useful for mounting root CAs  
+      
+    For example:
+    
+    ```yaml
+    volumeMounts:
+    - name: root-cas
+      mountPath: /var/run/secrets/cert-manager-csi-driver-spiffe
+    ```
+    #### **app.driver.csiDataDir** ~ `string`
+    > Default value:
+    > ```yaml
+    > /tmp/cert-manager-csi-driver
+    > ```
+    
+    Configures the hostPath directory that the driver will write and mount volumes from.
+    #### **app.driver.resources** ~ `object`
+    > Default value:
+    > ```yaml
+    > {}
+    > ```
+    
+    Kubernetes pod resource limits for cert-manager-csi-driver-spiffe  
+      
+    For example:
+    
+    ```yaml
+    resources:
+      limits:
+        cpu: 100m
+        memory: 128Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+    ```
+    #### **app.driver.nodeDriverRegistrarImage.registry** ~ `string`
+    
+    Target image registry. This value is prepended to the target image repository, if set.  
+    For example:
+    
+    ```yaml
+    registry: registry.k8s.io
+    repository: sig-storage/csi-node-driver-registrar
+    ```
+    
+    #### **app.driver.nodeDriverRegistrarImage.repository** ~ `string`
+    > Default value:
+    > ```yaml
+    > registry.k8s.io/sig-storage/csi-node-driver-registrar
+    > ```
+    
+    Target image repository.
+    #### **app.driver.nodeDriverRegistrarImage.tag** ~ `string`
+    > Default value:
+    > ```yaml
+    > v2.13.0
+    > ```
+    
+    Override the image tag to deploy by setting this variable. If no value is set, the chart's appVersion is used.
+    
+    #### **app.driver.nodeDriverRegistrarImage.digest** ~ `string`
+    
+    Target image digest. Override any tag, if set.  
+    For example:
+    
+    ```yaml
+    digest: sha256:0e072dddd1f7f8fc8909a2ca6f65e76c5f0d2fcfb8be47935ae3457e8bbceb20
+    ```
+    
+    #### **app.driver.nodeDriverRegistrarImage.pullPolicy** ~ `string`
+    > Default value:
+    > ```yaml
+    > IfNotPresent
+    > ```
+    
+    Kubernetes imagePullPolicy on node-driver.
+    #### **app.driver.livenessProbeImage.registry** ~ `string`
+    
+    Target image registry. This value is prepended to the target image repository, if set.  
+    For example:
+    
+    ```yaml
+    registry: registry.k8s.io
+    repository: sig-storage/livenessprobe
+    ```
+    
+    #### **app.driver.livenessProbeImage.repository** ~ `string`
+    > Default value:
+    > ```yaml
+    > registry.k8s.io/sig-storage/livenessprobe
+    > ```
+    
+    Target image repository.
+    #### **app.driver.livenessProbeImage.tag** ~ `string`
+    > Default value:
+    > ```yaml
+    > v2.15.0
+    > ```
+    
+    Override the image tag to deploy by setting this variable. If no value is set, the chart's appVersion is used.
+    
+    #### **app.driver.livenessProbeImage.digest** ~ `string`
+    
+    Target image digest. Override any tag, if set.  
+    For example:
+    
+    ```yaml
+    digest: sha256:0e072dddd1f7f8fc8909a2ca6f65e76c5f0d2fcfb8be47935ae3457e8bbceb20
+    ```
+    
+    #### **app.driver.livenessProbeImage.pullPolicy** ~ `string`
+    > Default value:
+    > ```yaml
+    > IfNotPresent
+    > ```
+    
+    Kubernetes imagePullPolicy on liveness probe.
+    #### **app.driver.livenessProbe.port** ~ `number`
+    > Default value:
+    > ```yaml
+    > 9809
+    > ```
+    
+    The port that will expose the liveness of the csi-driver
+    #### **app.approver.replicaCount** ~ `number`
+    > Default value:
+    > ```yaml
+    > 1
+    > ```
+    
+    Number of replicas of the approver to run.
+    #### **app.approver.signerName** ~ `string`
+    > Default value:
+    > ```yaml
+    > ""
+    > ```
+    
+    A signer name that the csi-driver-spiffe approver will be given permission to approve and deny. CertificateRequests referencing this signer name can be processed by the SPIFFE approver. See: https://cert-manager.io/docs/concepts/certificaterequest/#approval. Defaults to empty which allows approval for all signers
+    #### **app.approver.readinessProbe.port** ~ `number`
+    > Default value:
+    > ```yaml
+    > 6060
+    > ```
+    
+    Container port to expose csi-driver-spiffe-approver HTTP readiness probe on default network interface.
+    #### **app.approver.metrics.port** ~ `number`
+    > Default value:
+    > ```yaml
+    > 9402
+    > ```
+    
+    Port for exposing Prometheus metrics on 0.0.0.0 on path '/metrics'.
+    #### **app.approver.metrics.service.enabled** ~ `bool`
+    > Default value:
+    > ```yaml
+    > true
+    > ```
+    
+    Create a Service resource to expose metrics endpoint.
+    #### **app.approver.metrics.service.type** ~ `string`
+    > Default value:
+    > ```yaml
+    > ClusterIP
+    > ```
+    
+    Service type to expose metrics.
+    #### **app.approver.metrics.service.servicemonitor.enabled** ~ `bool`
+    > Default value:
+    > ```yaml
+    > false
+    > ```
+    
+    Create Prometheus ServiceMonitor resource for cert-manager-csi-driver-spiffe approver.
+    #### **app.approver.metrics.service.servicemonitor.prometheusInstance** ~ `string`
+    > Default value:
+    > ```yaml
+    > default
+    > ```
+    
+    The value for the "prometheus" label on the ServiceMonitor. This allows for multiple Prometheus instances selecting difference ServiceMonitors using label selectors.
+    #### **app.approver.metrics.service.servicemonitor.interval** ~ `string`
+    > Default value:
+    > ```yaml
+    > 10s
+    > ```
+    
+    The interval that the Prometheus will scrape for metrics.
+    #### **app.approver.metrics.service.servicemonitor.scrapeTimeout** ~ `string`
+    > Default value:
+    > ```yaml
+    > 5s
+    > ```
+    
+    The timeout on each metric probe request.
+    #### **app.approver.metrics.service.servicemonitor.labels** ~ `object`
+    > Default value:
+    > ```yaml
+    > {}
+    > ```
+    
+    Additional labels to give the ServiceMonitor resource.
+    #### **app.approver.resources** ~ `object`
+    > Default value:
+    > ```yaml
+    > {}
+    > ```
+    
+    Kubernetes pod resource limits for cert-manager-csi-driver-spiffe approver  
+      
+    For example:
+    
+    ```yaml
+    resources:
+      limits:
+        cpu: 100m
+        memory: 128Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+    ```
+    #### **priorityClassName** ~ `string`
+    > Default value:
+    > ```yaml
+    > ""
+    > ```
+    
+    Optional priority class to be used for the csi-driver pods.
+    #### **commonLabels** ~ `object`
+    > Default value:
+    > ```yaml
+    > {}
+    > ```
+    
+    Labels to apply to all resources
+    #### **nodeSelector** ~ `object`
+    > Default value:
+    > ```yaml
+    > kubernetes.io/os: linux
+    > ```
+    
+    Kubernetes node selector: node labels for pod assignment.
+    
+    #### **affinity** ~ `object`
+    > Default value:
+    > ```yaml
+    > {}
+    > ```
+    
+    Kubernetes affinity: constraints for pod assignment.  
+      
+    For example:
+    
+    ```yaml
+    affinity:
+      nodeAffinity:
+       requiredDuringSchedulingIgnoredDuringExecution:
+         nodeSelectorTerms:
+         - matchExpressions:
+           - key: foo.bar.com/role
+             operator: In
+             values:
+             - master
+    ```
+    #### **tolerations** ~ `array`
+    > Default value:
+    > ```yaml
+    > []
+    > ```
+    
+    Kubernetes pod tolerations for cert-manager-csi-driver-spiffe.  
+      
+    For example:
+    
+    ```yaml
+    tolerations:
+    - key: foo.bar.com/role
+      operator: Equal
+      value: master
+      effect: NoSchedule
+    ```
+    #### **topologySpreadConstraints** ~ `array`
+    > Default value:
+    > ```yaml
+    > []
+    > ```
+    
+    List of Kubernetes TopologySpreadConstraints.  
+      
+    For example:
+    
+    ```yaml
+    topologySpreadConstraints:
+    - maxSkew: 2
+      topologyKey: topology.kubernetes.io/zone
+      whenUnsatisfiable: ScheduleAnyway
+      labelSelector:
+        matchLabels:
+          app.kubernetes.io/instance: cert-manager
+          app.kubernetes.io/component: controller
+    ```
+    #### **openshift.securityContextConstraint.enabled** ~ `boolean,string,null`
+    > Default value:
+    > ```yaml
+    > detect
+    > ```
+    
+    Include RBAC to allow the DaemonSet to "use" the specified  
+    SecurityContextConstraints.  
+      
+    This value can either be a boolean true or false, or the string "detect". If set to "detect" then the securityContextConstraint is automatically enabled for openshift installs.
+    
+    #### **openshift.securityContextConstraint.name** ~ `string`
+    > Default value:
+    > ```yaml
+    > privileged
+    > ```
+    
+    Name of the SecurityContextConstraints to create RBAC for.
+    
+    <!-- /AUTO-GENERATED -->
+icon: iVBORw0KGgoAAAANSUhEUgAAAFAAAABQCAYAAACOEfKtAAAl4ElEQVR4nMx9B5iV1bX2+5XT58ycaQzDIB2kKIgQLGAhKtHfXmLUG/Gaq0lMjMkfe8z9k6iJ8Sbq1UTNNUaMwZLYUSMCtqigdFQ6iDD06aeXr/zPWnvvM98czgDq8D//fp4TmVO+b+33W+Vda6+9Y+IQjaOv3eH90wDgAnAO1f1Khg5AA2CrN5b/semQ3Eg7FBf1gKfJyaiJjANwkvzvAAAhAHkAXQBaAewG0CJfHQCy8ndBANUA6uWrP4A6AFUA/AAyAHYCWA3gXflfyAfnyId3SEDsUwBLtE73aNx0ADcDOFVO6lAOeljzAdwN4J0ysvQpkH0GYBmTpYlEAPwOwDWez6xe7s1aool39e5/yg+kC3DdXmVXn3jd0kMAbgKQ8sjEo69A7BMAS8AzJUiHA3iKPvaYke69JyGky7/oQ9sRL9d1QUA5Umd0XXxX0zQYOvilLuK4gAdUeHytch/LAPwbgPUe2Xj0BYhfGcBewDsZwN8B9ANQAOBTX9A1AYbtAvmCixx96rrQdQ0VQQ3RkAbT1BD0aagKCvG6si6yBReW5SKRdpHMuXAIOU1DwAcEfBpfl0HvCaa6914AF0v/2KcgfiUAS4KFIQW7CMBsAAFpMoYmtYgml8m7DFwkoOGwOhNjDvNh7CAfhg/wobHaQE1URzCgwWdq8BlCvILtIm+5yOVctCcc7Gy38dnOAlY357Gu2UJzq4VUzoXfpyHkF2CS9kosbSlbTmri8xJEuy+Cy5cCsIy/Uyb6IwAPyPcdslACrmADqayDoKkxWNPHBzF1bAAjm/wIBL6aEWRzLjbuyOOD1Tm880kWa5oLrK2RoA6fUQTSkeYMKeMfyzCELwXkF5K+BDiv1pGZ3AvgWuV/DB2aZQOJjIO6qI4ZE0M497gwjhruh270ftts3kUm6yCXd2FLezQMjc00FNQR9Pf+W8d2sWJzHnMWpjFvZQatCQfRkA7TYN/qevzwHwBcL028hzbiCwJ50AD2EmUhgwQJdDy9p2vQoUGLpxzEwjouOD6MS6dXYFDDvpw9m3OwYXsBa7YWWHN2tVnY3m4ziOTvbDklwpv8Ysivo6lGx4A6E2Ol6Y8c6GeTLx3b9lh4+u0kXliYRmfaQWVEJ4hcx+UHTPIvlNq4vMycDhrEAwJYhtupJ0kk9kb5JInoWoYOUzh74MxJQfzg7EoMHeDrcT3SrMXrsliwIoulm3LY3mojnXc5sBi6xman6ZqIuvI3rogzPHtyB6SZ9HfYr2FgnYEpIwM45aggpowJsh/0ji07C3jwlTj+uSwL0wQHJ9thqzElUb9HUq0uiYf2RTjjfgHcj9Z9G8AvAIyQfzuGDr0z5WBIvYGbLorh1Emh4uTpJi0dNl74IIXXlmSwcZfFIJBZqgjqHe6+1IQv4gUVksLkOJK7DP6oRhNnTgnh/KkR1MeM4r1pLFiaxt3Pd2Frq82WYTs9/OImAL8E8GSZue4XxF4BLImw6qkcCeD3AGbIzyyiZvR5V8rBWZNDuO3SGOpiBsj/ke+JJx38dUECz76fxq4Om30YvTQPh9MkOOTwKdoSGKbucUrqZo40Z6Obsigu6Ur/Sa8B1Qa+OS2MK06LIhrRi7K0dtq486lOvLYsg6qILp6Vy0Ap//KGtKpPSqytVxDLAlgCHjwR9i6ZXdBNydJ08lO5nIPrzq7E986u7HGdVxel8MdXEti8x+Ko6Df3Jb4EQMEiTugwsE01BlOSzpTL1AceAarDGr9PgSngF9rrvZbimHlLRP3hDSauPTuKs46L9JDrT3PieODVOIIBnR+I9Iuu1DzKWm7xRGrsD8R9ACyjefT6E4Cr5PvMq0hY0gjbdvGbmTEWkvwT+bC2Lhu/eboTry7N8ESJm9lSRK9W0WTJ/AbVm7jh/EoMaTARDeu45/kuvPBhGlVhnQEnDYqFNcy+oR6hoIbF63P48+sJbNpjwW9q+zwQQGQrxDnJ5yrLqKkyijLSw/3ZE50c4U29SMBtT67+KIDve7SwLIj6PpB2g6cS8McleAX1lBg8Gfgf+F4Ng0dAkGBL1+dw6W9bMGepMBOaoG0L7bDdbl+mbkKCh3zA9IkhjsR/fzuB1rjNJJrNG8KsKVgMbDDx0CtxjD7Mh7u/U83X9Q76Pn1XyUf3JhnmLMmwTMvW51hGkpVkvv+7NSwAKYL0w6rsVpBznoVuDlnWWvVetE8RzJtkwFApkabSMAoC915djZOPCrFAZE6vLEzh6gdasbPTRk2FXtQ6+j75SB+RaqIotvR5LhAwNWxrtbGjxcJxYwM4fUoEg+tNvqbyjZSJDOsvovnJE0JMadrjThFgBR7J0Bgz+F4qgJAMlN3s6LRx1f2teHVhir9H16eHds/VNWxFtlt8sJqcK835cukTbYVVSWAtq4FK84bLyGSXVDiY6P768hime8CbPT+BG2d1MMJksgwSBHh+Hbjz8hgW/KYBT91Yh6oQfe5CpXipjMMpGnHHVxal0FhnoqnWYF9GX3IdYNq4APPEioDGxPzWxzs43XPlNchcJwzx4R8/q8c1Z0RhFVykc0IbyWxJJnLaN8zqwOwFiSKIX58Ywp3fjvGcSlRMEexfARiGntnMfgHUpBr/WBY8i2yAIhk93R+dFcXZx0eK4D35ZgK3P9OFipAucl5PFSWZcfDDs6L4X1PCePCVBF7+KMO5sNIdmmDeBj7ekkdjjYmLTqzAkYN9MHWtSGcIqI6Eg9lvJnHvi12ckZAvdFzxEOh+FSEN763O4e2VWfzkwiq89qt+OGqIj6OyISM8yUMy3v50F556M1kE8ZypEVx7ZhREwwxjHxxCEgu3nBmXpgeqDE4k+VvyPb4kOWWKgDMmBPGDc6rYrEiAuR+lceczXYLpY1/+Rn+PaPKxif7X813oX21g9g11uPu5OFY3F5gM06QefSOB2W8n0dLpoCvj8Hsqlw0HNNzx9y42MSLCP3m4TfotrUiDCKh+VTpOmhDCG0vS6Eg5qK3S+XteWei7JOsdz3SyaZ8+Jcxz+eG5VVizrYA3P8mhMiyDXndAISz+E0DcA2yPLyjbVk50hnSirLaKGtRX6njo2jrWANKQTzbn8KM/tcM0BR0oBU9F6nTGweWnRRHxa5hxdJiFfvT1BFJ5wfkI+nQeiKcdaIbGgJUO0kJTBpY1zRayBXpPqgX5ZRu497s1GFBr4D/ua8VLH2aws8NGKKCVlYvy8bdWZnD8mAAaa02e6JTD/Xh9SQbJnFAYD/+NytRvA2HUOOV6d9fie8W1ymggjdO8i0A6P2EHN19UhfpqgwXqStq4ZVYHmx9rSinrlQ68Iqhhwcc5PPJaHD84qxKnTw6xBm1rs4s8zpXugdIwZZKlw5udVIU1DkhKo4hHNsQMjB7ow13PdKIt5aCxRt+HJ6pBspLMJPstj3UgnrT5e/2qTdx0YRXzWk92pDjiaSUY9fxDaqD6+yMAX1MpWjzt4pTxATz4ozrWKOJNtz3Wjr9/kEZtVDD9Aw0ysYE1BhJZBx0pF5Fg+cl92UGgR4Maa/XBDnpoFLy+NS2MO6+sKc7tBw+04q1uU1bBYwmAY+RPXcUHvRqoUpf+AMbI9zTSorAfuO7cSqEpOvDOygyeX5RmqnIw4NEgs9zV5SBTEA7/QOCp0r16HWhQgIhnv9gTIdmrK3Q8tzCNd1dmiunjj8+rRMgP5QeVUhEmDZ6SmLgv9tU+yncrpPZplDad9bUQDh/k50lncw7uezFe9EcHO8hsKJUz9PImqoYi2V1pl6Mivejf3s96G+aXWO+jOdBcaE6ZnKjy0FxpzjR3wkCacYXEhkVRfND7bJV4U9SclQ+beWqUL0x+4bl/pbBme4E1qpzfO5Cw+wNdkxmEY7u46LgQfvedan5deGyIya4i4Pu7/hcdNAeay+rtBbzwXqq4tkJzJs4ptVA98ime9JaHl8aoL02DMCGNnvwZRwcxYqCP9TaZdjD77RRHti8K3oGGSuvIjO75jxqcdFSo+Nm5x0fwjUkZXP+XDv6Ojn0rNV9lcDoZ0DD7rSTOOz6McFjHyIE+nDguiLkrsuQLNQnk1NIOC91jvvRmrdJAklPXXK4oKwY5d0kam/dazMX6MgBA+jAymSu+HmHwtu2xcNtf2vGfs9rRvNfi92Z+PYJE2ulRpemLQXOhOW3eY2Hu0nSR6F0wNQzKddxuS6UgUqOWLQg79YFKlqcDqNY02Nk8tOH9TUwZHZDUwsWLi9LFJL+vBz1h4omnTAyxRtzxVAdm/yuNJ95N41ezheZ9/agQE2/7ENyffaGp8RIAzZXmTHMf1t8EYUGYSPCme4otRQBVuWYmPLxv6pgg18xorPm8gE+3fjnfd6Chnjg9nJAstm5rsRENa6gMadjRbvN79JnpqdL05VC+kOZIc6VBc582NshYeHjhTG95S/cUD0bJDITjBU3mhCMCxV+9tSrDaxel5fe+GIoeUQq3emuBA8X3To+iMqgxt/v+6VF+b11zgXlkuWp1XwyaG83x7VWZ4nvTxgXEQ+t2vYTRSJWlmR4AvwcgoGmwChZMyivHDfbzRYh2fLgut0/xsq8HZQ6z5icw/aggLjgxgpPGB1niupjBFZtZ80QV5VAN1xU1xEXrc/ihLD6MG+JHQ5WOzrSrmQYs1+UFNMLqBum6i7bNqqlp0HMFFyMaTVRXCmK1s9XC5t1Wr6nRVx2kXZm86CzYsNPiXHbxuhxqYwaDt3ZrHlfe04r1u0QFOiNX8fp6qJriZ7st7GwT3R81lQaGN5pcQdK0ohZeITGz1RuXyH477iYo2C5GNnUvR67bnkdX2hGLOQcpjO5pHHJc2TRU0lCkBj2wYf1MBA3h295fk8Ovn+pgPkiTemVRCu9+mmXpgyb4u/QbXTswue5NJtstZhrF97ncboDJ+/rmQvF3Iwf4kBf1S2WtdbJC45qyAnNljxKNBozyrOdu3G4VAVA3LBdImGHqQrBkVmhJ0K8xIWX/UhCrZpT881qJD6A8+7KTwrj+wirsbLOxu93iCk00pBXXhy+dXoFp44IMZv9akysuv38ujr8sSPL3Ar7uVb5eZbLBTUm6lCmqZMq7rNGUBxOVMaX8G3cUcMrRgouOajJR0kzhSsz+x5S8b6LCTlR4NTTUdudFW/ZaLAldPGeLnJNvZvS8ImluLguuOB83yo/B9QariO244tFpojq9t8vBJ9sK2NPlIJl1MGVUgEtkw5vo5dsHhMMafPzyjskj/VjX7GeNWbmlwJUVksmbNxPgLJMFVEc0HD3Mj0G1BhxNY6qiS5/l013s6nDwSXMBqawA+bM9xQYuNNSYjIlqlJDTnUTYEYDnexaSDcXH+lV2o9OZIBohKMa5k4P4vMXmxfF4xuGnpck8tF/U4KdFQm5vt7FoQx4dSVFAoEG5MEXVYQ0mTj8qiETW5cn/z9wEawFF4PU7BVWi71x/URUL/srCFF5ZnGHbGdFfdHQ9MjfBqd3XRvgwdqAPm3YLP03XdDwyNcQMjGnyYUC1zovq76/Ps4lmPTJVhnSM6G/gzIlBLqjSvLoS3VUSwoL4pyeHV+0h5xGAJypt58Ik5b8BjUs5NAqWi12dDvfhdaZcvLY8i/GDfThhjB9BnyiY6vLHmYLLnO3ZRRkuAJCp+Ayx6qbu2pVxsXBDHks25TG6ycSEISbzv8VrsnytIbUGF1a37CyI1Twd2LizgNeWZrh09sGaHD//oCyUPrsoi8ZqHUcO8uHkcUEEzO5VNpoBPbzmVhvvrc0xuMwl9Z4yEaDvrbWxZHMBAVMsdO3ucrg/h8h1ZUQUeen3clFfGfRJpqc9Q1NqT2bhk3QhL/0Wd4cawme89WmOTYUuakjVpmQ/lRNKHglonFumsmLlTJee25HVU9WdsHaHhY+3Wfx97laQjLot4WDiUB+DL7RE3kMWUOnfdG1dE74ykXEx/2OxZEkAKZksWyws0WXDQdG02ZtMJC+BY0n6QvPMSQD9plYaQBWAI00ZjrvflBfXteKfPHRZP0tmHIQDOmuk8nua/HVFUFCMDu6RMXHK+CAG1xmieEoAWC52djq89kA+kN4jk+Ylg4IroqBs3TD07lUc0phLpoYxfohPgAiwayCzXbklj5YuB5Vh0cZGgcSRMmlSJgKxM+mAUtMJQ4MYVKsjJDMsuu+ODgefbs3zUkHAL9cwPJUjxkPvsWahAKw2yy1blg4RrRycMCaASSP8mLM4w2aRt9wiwHRFesKHN/nwjYlB1FXp2LjDYp/WlXT4yVZFdNRW6pgxMYiLpoXx1qosm3Ii7Qi/Jc2OAoLyY2oCRKM+XJ9jN0JaFovq3OJ2xqRQ0cT3xh3uDLNkOFbp3xGDfHzP6god67dbWLPd4tVF+hoB31hj4N9OirDGPvlumosKPelRr3U4m4DbA6CpuGyniUVz1dyo+BFRBTI5utlVMyqQz7vYE3e4G5QG+c3+MZ2/+8HaPP61OicKkoaIjGQWJPQJYwPc2jv7rSQuOD6C0ycGsbfLRnvaLRY3a8MatrdZfG3ydcT5XluWZfDhKl7p8n8bYwaDQz5wbbOF48cGiuU2SgUbYqJqTvJ8sC7PJqxkgsyyCDifqWHaGD9XotXDVGZOv/csvMOzxLnHlJtSmtifurJtwxI9JTSCfp1pyc4OQXj//n6aNZCiZEO1ofJEFAouXm+z8PlemzUgGtJRJyO56AdxUSho+ObUCM4/QZSlbpzVgXGDfBjSz0QopBeLmR+0WYiFtGKvHwleU6FzW5rl0Ux6vz3l4PE3U3jqpnrEUzYefC2Bw+pNDoZknttbLGYN7C5CWg+ZvLZouy7eX5vnqEy+tCqos0WxmcuGT617QVNF4dUE4DzVruYWF8NdtCcdNNaJv/tVGfik2eKnUxPV+QmR/yGNVJLQxenmkRA9XZ2jN5kdmTlkcKqJ6Jg4ws+/v/FbMSbTf5qbxN54Xva5uOx/spaL40f5e7RGtSfFg1H9MCQXaU19VMd9P63B0aMC2LQjLzpemwsc9Oj39BCIUZA2kSydaYdl8yJoyqVUZh6uWE6oj+nFumNb0uFAZe6bys4jAF8CcDsFKpKVyH/KAlq7unkQ5YM2O2YR8cicI0G9zE4XsW2hPWNzZ9Wxh/sxvNGHxiqdqcnuDhtDGn2ixQ3AsaMD+NtbKY5QggoJLaRo7i2a+nTgzMkhTBjqR2VA4wi5O+5g+cY8fnJeJYNHZjZigB8ThvmxdrvFvk8EWGIRlBnZqI7obKZD+/vQEBUAtSRcbGuxuLeaon+sQpDsGg8Pbo3bTMb9fnYfqg0uDeBlAnAzgDcBnCWTBYMu0Ly3m4mPGmAWtWjKSD827bREjU735LuSew2oMTBzegW+Pj6IVA7Y0WZxEKGxt9PmHprLTony3wQqZSLhoA5SinTO4TZe4lsFyyz6HHpg9DBCfp37Z+jvaWMDiPo1bN1dgOOGGAzicyGfhj2dNtcRC7IrbFC9gatnRHHCEUH2wzvbbcQTNruDgbU6Jg0P4dozK7h79m/vpFl7Dx/QHVe377VkkVWDp0dmAWGnvvUIgLOLXJDy353dAI5o8rE/IIrytRF+XnxetSXP+zO4KUfTeKmStG1og8lmdNezcaYq2Xx3lxVxPeKQ/asNnDo5jFMnhXH7vzn4xZOdGNpPZBg1lTp3CrS1W9ytEA4ITvbrZ+NFUMgUUxkXl5wQxjXn1LDQezssPP1mklnCwDqDzbsipGPkAJP7DynLuf2pLl4Q484vj3uggEKRelCdIVyDIeasxoadVikH1CRmTF806QfXAhjjurD9pmZs2FEQ+aKu4XCaWIXOO4YenpvEGyuyOG50gLvlowHR5JPMuli+KY8/vprgPJLNPCB2H3mHqRu4+7kuNrvqSgPfPLkCwxp9WLA8DccG6qsM4fh3F9h0IRflHY6UOnPKw2oNnHtsCFfMqCz2Gz7wUpw17+QJIW5SsqVMH67L4d6X4ti61+aIrnZDlQ5KTdftsPghU8Zz+ECftCyXFUKW8lQD5hqJmaaqMXm5Me8Pqia2ZY+FXa02mvqZ7A+Ic729OsdtFVv2WuyobcnaFbUgIksUggQobrsqoU8UaJrbbdz8aDsevq4Ohqlh0uEBfrV02tiy20LFrgLGD/MXs6GpY4Pw+3RenxjWaPKuJr/otmfi/fy7SbywKMMu5c2PRZbkemQi4k8UyOlFJkBYBxH2zrTLhZDuWqiNz/eKOqSn2vOg2mNierrRnwLwf1yg3jDgticdbcXmHAMIWdpe8HEWris3vfSy4UUJ2VvhlSZNyfu/1uTw0z+14bdX1bAPpIymPmbwa8roQI/fHDsuyK/SexBQL72fwi+f7uJUjf4u1XhX+m77AFu9FeAULKfJe9FvCQNiJFUVuus4rGwtAJ5W09E9zdXtAJ6FsGmb/Nq7n2SLNzhpQqjYyqEEKvfSJPHc37BlVvLGyhz+/fet+PSzXHFfnCV9nPcaqntfUSIKDOR7f/+PTtz2RCdrqiqElL5URsNF0wMsh9I9ayt0XkqQODAGkhIpif4hN4NzWau0M+EZKbBBprh4Q54bxmkMrDdx3OEBphjlelVUoKC8szp84JU7AaLoCLji3lbc/Uwntu62RJeWSt6lJtPE/TKpT6Yd/OOdJC69qwWPvJHkRku9TGudGqowQMSd+G1vg+ZEcyNq1VQvrI7mThhwZuMUWwGf8XYmGI1Trlf/duW20MsBxHwGnNa4ow1vMDF2iFhcItN7dXGan3hpZzw9aaIYV55agf+6qoY3/7XE7WKmUm7wIo5PgwMNH23I4Z+L09jYnEdX0uWOfb/UrEzO4YamF99P4e5nu/D8wjQSOZHt7O9BESjxtIsTxwZw179Xc7q54rM8X7cUcE1mYLdeHMNh0m29+mEacz7KUOBS9dfPAdzm3S6ryzYtZcZZ2UhIN3B8noVmJr5jg5g8PCCqtlILVT8f+Y5fz4zh5ktirPI72mxm9AfqZ3FkPTEW0ZG1gJeXZHHjYx343v2tvBKXzjj4/v2t+P6D7fjzvCR2dNiIVehqy1avQ5fWMGGwD3ddWc25862XxDB6gMlc0Lsuw33aWReTRwR4jq7cuMiNBAJsdaeFEiNDtbiVay5iAHmhOahxuWjh6myxIfzqMyqY7Hp/RanRoz+uxcUnRrh63dxSwInjArjxvKj0m+5+F8JdadLkBonr9avWsXhzHlfd18ordB9uyHN1p7htwim//uEFT63W/5bAc4EFyzP83tO39sM9V1aLMpxHKJrT1adXiN3xAD5YnWWuW9JIsLAEqx4Aqq8tlf9lm3c1DY+9kSxGqRPGh7jOR6ZhyBBEgsxfnuUJr9iY41SJousPz6vibvuCJRZ2DrSCpoAkraVU8BNZN6yS27XEcQD7v0Zxg03B5RbgO5/u5MLIrZdVcxb0m2c68dbH2aL2KjM/ZUKQ56YYxGPzkl6B1TrI0hKsBIDSjJWarpWhWnMcuEQLFq7P4c3l6aKz/umFVVwq4kipiaT+ibeT+NfaPJ55N8XEd0eLhW//di+Wbs4Xu1FzhYNfVKYJhry7nA5icHUm4WBMk4kRDSbPcuH6PC67uwXvrsrgwhMi+GBNFi8vzhRpGM2B5nL9BVXFFr4Fy9JYtC7HlMjp3nLSIrFhrMp1qKrOyy4Aq9QXIZtuHng5ztSBntCwAT78+Jwo57IqIrN5GcC3T6lAe8LG5b9rYfCiMv3K5FyuUnuXRw80nH3PQNgvePTgLjspjNk39+PULJFxmUC3px1c/2gH90/brsb+ll2GLvJxmsvQAaLIQXN8YE7cW3lRj2+V7NLXy3bpy2istu8PkwdHcDtewNTQ3GbDgIvjxgXZf0wcHsCmHcLEIlIbKXhQ6vTs+2nug66M6OzI6Xa3fasKt8+s5vTsvdU5LmW57sG175Ybht69IE4vAuLG8yvx04tieOilLhw9MsBRddnmPGdGBNjyz7oXqlR/9JmTQrj5WzEUHJcZw4Mvd+H15VlmHE43gCTlE/LQCsaoty59hewbXoAV8X10fkruNxMtZgTImAHiSateZgIuZ4mFJYps9VEdj/yolskp+ab+NYYoTsobdKZEfa6cf9QkUOU+owhPAHQkxdIqWcnSjXn2dxeeWMEPtanGwGkTQsz/CORYRGPwDO5FdDG2yYdfzRRBhua0dF0Oj81P8Vw9bsMowaSHTRQB9PhBTZ61UrR3NRn6n58/0YGOuM2TikV13P/9Gi6UZvICRFO+sgUXTdUGnr21HseMDWJDcwG5vIOFa3McUFQ36s+/WYkRjT5RAZfnxcCzz43SKNmXUhyFgouZ08P4x8/64bdXxLiERT5t7oos/vJ6nInw9hYbN10cwxGDfcWIq8yWZK2r0PHf19TwHOgzmhPNze25qVvBuEYeDaB5/V9vGmjIRPkR7/Z3boP1a/hsr4XbZnVAc12mJ+Q7Hrq2hjWOBFPHmxi6xh0MdzzdhWv+u4ULAHUxE6s+y/N1KKCQhsz8RiXOmBTkgukj19YWmxstR2jMVadVCIALYk02mXFw8bQwbrusGhua8xg7yI/pRwRYy+qrDDz0zyRr0rlTw7ju4TaueBPh9oJHsj74wxoMbfTxHOip/WxWB7a02Cybx+86ntJVwRONewUQajM1gL9I5m0qEJUpz/84izue6mSfQfnp+GEB/Pm6WtbEpFx8Vh1X81Zl8dKSLP4wJ86L5USwgz6dHf7RI0SGc/zYIGaeUgFddl6ROaayDs6eEsItl8Rwyzcr2XeRjyVfO26wHxu3F/DY3ASqozouP60CkYBYaDIMDbc83oGzfrGHix/RsCYXq0S/Tm1Ex5+vq8ORwwIsO83hzic7+bv0wOye3Qc09y0AHkPJaXBlAfRkJfR+AsB3PZopQJR7K554O4X7nu9iYks8jwT66/V1GN1ocmlc+UTyRQNrDby7OodrHmzjLVZi9Qr4xuQwPtue56XFsUP9eJmyHsnDKHCdOjGED1dnMWKADxOG+hhUCj7zVmS4CZwCxbrmAq8U6rqYvN8EWhIOWuIuy6kCFflLykJIxiOH+Vlmkv3e57p4LtU997x4idN3JRa6d4PN/jQQnp3b8+XBYYb3kBoSlG748D8TuPe5Tias3JbR6MNfb6zH+ceEhHO3u7vvyY/t7LB5Msy9QjoDO2t+Ess25fimKzbnuS5H2nlYnYEjhgb475oqAzOODjEVqgjpWLQ+j39+lMYdM6t58/UvZ3dytFc7z32G2EcHyfNIlvOOCeHxG+oxmMzWEZ/f82wnHn49wQtlHs2zPZ2718jSvVFO+1DuKDoKz5LSKH+4RK6bfEMe58S7eF0XWiggtpi2dVo4+cggawEl6jMmh9G/SsfyTaKWFvSrteHu3ZUk72uL01j5uSj7B3XgxQ8zHA3jGQeXnRjhuuB7n2YZ/GNGBfDSwjRzSvr9GysymLcszdsu6Bphz9Yx1dXQlXa4K+u2i6vwkwtjxeKEa7v41d868NiClBc819NkkATwHbljvQjeQZ2ZgN6PO5koq9bHyvf57BWmLkkHJ40N4NdXVnMrmDqXYPveAv44J47Xlmb5vYqQVuwtVDVF+j3RGMcRPYOKEB8zUuyMemNllrVx3CA/Vm/LM0VS3FEdd8K7Nt3uvkUKKHR/CkzXnhPFwH6+okx72i0OGO+tyXFRQoJnebozFgH4AYCVB3P8Sa/ZaS8g+gD8bwC3Aoipgq9pQO9KuTisVsfPL41x8dU7lqzL4fH5Ce48pSARkid4qEPC1HA8a8y87UqW0MjZp/Mut5h5z1tQx+Kxi7BEFkFRdNrYAK48LYrJJZXtd1ZmODfe3u5wLdKyi1FWk0XSuwDcJwE9qLNj9pve7+dEyqHy4J0r5N+2ocMg7ufYwCUnhnHtOZWIRQ2Rysi7rNqUw5xFabzzaZaXRR25/sJ7gUuOOPEul4q2YK3H6Yvkx0hzVasvUaKTjwjinOPCmDAiUHwg9FlHwsaDL8fxzHtp6Ebx9CLvCR2Py7XxLWXm+uUO3ukFSM1z4BiNU+RRm5PohroGjVwc+Z6h9Sa+e3oFzp0aYYC8ozNhcxP5+1wyKjCYiYxT1EDRHdadgahKkOPp1yFuR6BRdJ42LohjRgdQFe3p0olwv7wwhUdeT2JLq8UVHg3Fapwmqys3A3hL/uQLH4t30C3aZbRR8aKAPJziFvkZ7zHOFsRmnQmDfbhsegXOmBxCMLhv0KcA0bzXwuZdBd7e9XmLzYXUTK67izToA7ejRUI6Hy01qMHkNejD+pn7nJUFeSjG3KUZPPl2Eh9/XuANM3SNkuOe7pIHSuTKnTLcZ4ePlY79nKd1gSScVeBFKdGolMqJxpxRA0Qr2oxJId68eCgGket5yzKYuyzNi+FEyCOyIOpZ0+2SDeIvlpnDFz5D8EvtttjPOYJHS8EGqcimTDEjz7UiMzpysI8d/aRRAdakaOTLlWQSKYc1d+mGHLf+frK1wNQlKOuIniNBVZTdKh/08q96bqB38l969HJ+6mAAcwCM99IDtT+EnD9FWMpBaZINMYPPuBrc3+T2joZqg1vdqoJacVcSBQrKq9MZB3s6bF7Y/3y3xR0Qezptkf4Zoq1YkWlvvJEyrAJwrgSxz85R/cr7fXox6Rq5+DzDk1t3b5PXPRmKJaKpJSsmFG25j8ZEjzNUs5YKJt2NmD5e6uxuAi3ZCe89UGye3EzU0dfHIffJhqleQDTl4YbXyfctT/Ap3lcrORdQde45TrcSSc6nKmrFBqgyO+BdTzBQxPh+eUikfSgO5O4TAFHeL6qpXSCpzgjP505Jwq6VvHoIV1LVd0tPVJNDL8ntN0mK8kIZmf7/OojbO3o5R78SwNXyILMJB7ivJSNlSp6RD3n8UkRG+P01xLvS1/1NHl8XP9Tn6fc5gNg/1aH7jZannDfI/yMBW5aL2mTDe7v8Oy05GiTXDMsThGrkb2vl36q7bI88rXydR9MOyfHv3nFIAMT+qc7/i9EnFOVgxv8NAAD//8T+g7OnHEIpAAAAAElFTkSuQmCC

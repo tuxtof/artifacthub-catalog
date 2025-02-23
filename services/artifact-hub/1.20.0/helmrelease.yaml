@@ -1,0 +1,25 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: artifact-hub
+  namespace: ${releaseNamespace}
+spec:
+  chart:
+    spec:
+      chart: artifact-hub
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: artifact-hub
+        namespace: ${releaseNamespace}
+      version: 1.20.0
+  interval: 1m0s
+  targetNamespace: ${releaseNamespace}
+  releaseName: artifact-hub
+  valuesFrom:
+    - kind: ConfigMap
+      name: artifact-hub-1.20.0-defaults
+    - kind: ConfigMap
+      name: artifact-hub-overrides
+      optional: true

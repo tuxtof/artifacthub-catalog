@@ -1,0 +1,8 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-json-exporter-0.16.0-defaults
+  namespace: ${releaseNamespace}
+data:
+  values.yaml: |

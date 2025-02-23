@@ -1,0 +1,8 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: meshery-operator-0.8.36-defaults
+  namespace: ${releaseNamespace}
+data:
+  values.yaml: |

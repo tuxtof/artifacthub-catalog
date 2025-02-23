@@ -1,0 +1,25 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: argo-cd
+  namespace: ${releaseNamespace}
+spec:
+  chart:
+    spec:
+      chart: argo-cd
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: argo
+        namespace: ${releaseNamespace}
+      version: 7.8.4
+  interval: 1m0s
+  targetNamespace: ${releaseNamespace}
+  releaseName: argo-cd
+  valuesFrom:
+    - kind: ConfigMap
+      name: argo-cd-7.8.4-defaults
+    - kind: ConfigMap
+      name: argo-cd-overrides
+      optional: true

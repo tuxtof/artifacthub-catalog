@@ -1,0 +1,425 @@
+displayName: argo-workflows
+description: A Helm chart for Argo Workflows
+category:
+- artifact-hub
+type: catalog
+allowMultipleInstances: false
+scope:
+- workspace
+licensing:
+- Ultimate
+- Enterprise
+certifications:
+overview: |
+    # Argo Workflows Chart
+    
+    This is a **community maintained** chart. It is used to set up argo and its needed dependencies through one command. This is used in conjunction with [helm](https://github.com/kubernetes/helm).
+    
+    If you want your deployment of this helm chart to most closely match the [argo CLI](https://github.com/argoproj/argo-workflows), you should deploy it in the `kube-system` namespace.
+    
+    ## Pre-Requisites
+    
+    ### Custom resource definitions
+    
+    Some users would prefer to install the CRDs _outside_ of the chart. You can disable the CRD installation of this chart by using `--set crds.install=false` when installing the chart.
+    
+    Helm cannot upgrade custom resource definitions in the `<chart>/crds` folder [by design](https://helm.sh/docs/chart_best_practices/custom_resource_definitions/#some-caveats-and-explanations). Starting with 3.4.0 (chart version 0.19.0), the CRDs have been moved to `<chart>/templates` to address this design decision.
+    
+    If you are using Argo Workflows chart version prior to 3.4.0 (chart version 0.19.0) or have elected to manage the Argo Workflows CRDs outside of the chart, please use `kubectl` to upgrade CRDs manually from [templates/crds](templates/crds/) folder or via the manifests from the upstream project repo:
+    
+    ```bash
+    kubectl apply -k "https://github.com/argoproj/argo-workflows/manifests/base/crds/full?ref=<appVersion>"
+    
+    # Eg. version v3.3.9
+    kubectl apply -k "https://github.com/argoproj/argo-workflows/manifests/base/crds/full?ref=v3.3.9"
+    ```
+    
+    ### ServiceAccount for Workflow Spec
+    In order for each Workflow run, you create ServiceAccount via `values.yaml` like below.
+    
+    ```yaml
+    workflow:
+      serviceAccount:
+        create: true
+        name: "argo-workflow"
+      rbac:
+        create: true
+    controller:
+      workflowNamespaces:
+        - default
+        - foo
+        - bar
+    ```
+    
+    Set ServiceAccount on Workflow.
+    
+    ```yaml
+    apiVersion: argoproj.io/v1alpha1
+    kind: Workflow
+    metadata:
+      generateName: hello-world-
+    spec:
+      entrypoint: whalesay
+      serviceAccountName: argo-workflow # Set ServiceAccount
+      templates:
+        - name: whalesay
+          container:
+            image: docker/whalesay
+            command: [ cowsay ]
+            args: [ "hello world" ]
+    ```
+    
+    ## Installing the Chart
+    
+    To install the chart with the release name `my-release`:
+    
+    ```console
+    $ helm repo add argo https://argoproj.github.io/argo-helm
+    "argo" has been added to your repositories
+    
+    $ helm install my-release argo/argo-workflows
+    NAME: my-release
+    ...
+    ```
+    
+    ## Changelog
+    
+    For full list of changes, please check ArtifactHub [changelog].
+    
+    ## Usage Notes
+    
+    ### High Availability
+    
+    This chart installs the non-HA version of Argo Workflows by default. If you want to run in HA mode, you can use [these example values](ci/ha-values.yaml) as a starting point.
+    Please see the upstream [Operator Manual's High Availability page](https://argo-workflows.readthedocs.io/en/stable/high-availability/) to understand how to scale Argo Workflows in depth.
+    
+    ### Workflow controller
+    
+    This chart defaults to setting the `controller.instanceID.enabled` to `false` now, which means the deployed controller will act upon any workflow deployed to the cluster. If you would like to limit the behavior and deploy multiple workflow controllers, please use the `controller.instanceID.enabled` attribute along with one of its configuration options to set the `instanceID` of the workflow controller to be properly scoped for your needs.
+    
+    ### Argo Workflows server authentication
+    
+    Argo Workflows server provides some choices for authentication mechanism and you can configure `.Values.server.authModes`. By default, authentication mode is `[server]`, for local development purposes or cases where your gateway authentication is covered by some other means.
+    Please refer to [Argo Server Auth Mode] for more details.
+    
+    Argo Workflows server also supports SSO and you can enable it to configure `.Values.server.sso` and `.Values.server.authModes`. In order to manage access levels, you can optionally add RBAC to SSO. Please refer to [SSO RBAC] for more details.
+    
+    ## Values
+    
+    The `values.yaml` contains items used to tweak a deployment of this chart.
+    Fields to note:
+    
+    - `controller.instanceID.enabled`: If set to true, the Argo Controller will **ONLY** monitor Workflow submissions with a `--instanceid` attribute
+    - `controller.instanceID.useReleaseName`: If set to true then chart set controller instance id to release name
+    - `controller.instanceID.explicitID`: Allows customization of an instance id for the workflow controller to monitor
+    - `singleNamespace`:  When true, restricts the workflow controller to operate
+      in just the single namespace (that one of the Helm release).
+    - `controller.workflowNamespaces`: This is a list of namespaces where the
+      workflow controller will manage workflows. Only valid when `singleNamespace`
+      is false.
+    
+    ### General parameters
+    
+    | Key | Type | Default | Description |
+    |-----|------|---------|-------------|
+    | apiVersionOverrides.autoscaling | string | `""` | String to override apiVersion of autoscaling rendered by this helm chart |
+    | apiVersionOverrides.cloudgoogle | string | `""` | String to override apiVersion of GKE resources rendered by this helm chart |
+    | apiVersionOverrides.monitoring | string | `""` | String to override apiVersion of monitoring CRDs (ServiceMonitor) rendered by this helm chart |
+    | commonLabels | object | `{}` | Labels to set on all resources |
+    | crds.annotations | object | `{}` | Annotations to be added to all CRDs |
+    | crds.install | bool | `true` | Install and upgrade CRDs |
+    | crds.keep | bool | `true` | Keep CRDs on chart uninstall |
+    | createAggregateRoles | bool | `true` | Create clusterroles that extend existing clusterroles to interact with argo-cd crds |
+    | emissary.images | list | `[]` | The command/args for each image on workflow, needed when the command is not specified and the emissary executor is used. |
+    | extraObjects | list | `[]` | Array of extra K8s manifests to deploy |
+    | fullnameOverride | string | `nil` | String to fully override "argo-workflows.fullname" template |
+    | images.pullPolicy | string | `"Always"` | imagePullPolicy to apply to all containers |
+    | images.pullSecrets | list | `[]` | Secrets with credentials to pull images from a private registry |
+    | images.tag | string | `""` | Common tag for Argo Workflows images. Defaults to `.Chart.AppVersion`. |
+    | kubeVersionOverride | string | `""` | Override the Kubernetes version, which is used to evaluate certain manifests |
+    | nameOverride | string | `nil` | String to partially override "argo-workflows.fullname" template |
+    | namespaceOverride | string | `.Release.Namespace` | Override the namespace |
+    | singleNamespace | bool | `false` | Restrict Argo to operate only in a single namespace (the namespace of the Helm release) by apply Roles and RoleBindings instead of the Cluster equivalents, and start workflow-controller with the --namespaced flag. Use it in clusters with strict access policy. |
+    
+    ### Workflow
+    
+    | Key | Type | Default | Description |
+    |-----|------|---------|-------------|
+    | workflow.namespace | string | `nil` | Deprecated; use controller.workflowNamespaces instead. |
+    | workflow.rbac.agentPermissions | bool | `false` | Allows permissions for the Argo Agent. Only required if using http/plugin templates |
+    | workflow.rbac.artifactGC | bool | `false` | Allows permissions for the Argo Artifact GC pod. Only required if using artifact gc |
+    | workflow.rbac.create | bool | `true` | Adds Role and RoleBinding for the above specified service account to be able to run workflows. A Role and Rolebinding pair is also created for each namespace in controller.workflowNamespaces (see below) |
+    | workflow.rbac.serviceAccounts | list | `[]` | Extra service accounts to be added to the RoleBinding |
+    | workflow.serviceAccount.annotations | object | `{}` | Annotations applied to created service account |
+    | workflow.serviceAccount.create | bool | `false` | Specifies whether a service account should be created |
+    | workflow.serviceAccount.labels | object | `{}` | Labels applied to created service account |
+    | workflow.serviceAccount.name | string | `"argo-workflow"` | Service account which is used to run workflows |
+    | workflow.serviceAccount.pullSecrets | list | `[]` | Secrets with credentials to pull images from a private registry. Same format as `.Values.images.pullSecrets` |
+    
+    ### Workflow Controller
+    
+    | Key | Type | Default | Description |
+    |-----|------|---------|-------------|
+    | controller.affinity | object | `{}` | Assign custom [affinity] rules |
+    | controller.clusterWorkflowTemplates.enabled | bool | `true` | Create a ClusterRole and CRB for the controller to access ClusterWorkflowTemplates. |
+    | controller.clusterWorkflowTemplates.serviceAccounts | list | `[]` | Extra service accounts to be added to the ClusterRoleBinding |
+    | controller.columns | list | `[]` | Configure Argo Server to show custom [columns] |
+    | controller.configMap.annotations | object | `{}` | ConfigMap annotations |
+    | controller.configMap.create | bool | `true` | Create a ConfigMap for the controller |
+    | controller.configMap.name | string | `""` | ConfigMap name |
+    | controller.cronWorkflowWorkers | string | `nil` | Number of cron workflow workers Only valid for 3.5+ |
+    | controller.deploymentAnnotations | object | `{}` | deploymentAnnotations is an optional map of annotations to be applied to the controller Deployment |
+    | controller.extraArgs | list | `[]` | Extra arguments to be added to the controller |
+    | controller.extraContainers | list | `[]` | Extra containers to be added to the controller deployment |
+    | controller.extraEnv | list | `[]` | Extra environment variables to provide to the controller container |
+    | controller.extraInitContainers | list | `[]` | Enables init containers to be added to the controller deployment |
+    | controller.image.registry | string | `"quay.io"` | Registry to use for the controller |
+    | controller.image.repository | string | `"argoproj/workflow-controller"` | Registry to use for the controller |
+    | controller.image.tag | string | `""` | Image tag for the workflow controller. Defaults to `.Values.images.tag`. |
+    | controller.initialDelay | string | `nil` | Resolves ongoing, uncommon AWS EKS bug: https://github.com/argoproj/argo-workflows/pull/4224 |
+    | controller.instanceID.enabled | bool | `false` | Configures the controller to filter workflow submissions to only those which have a matching instanceID attribute. |
+    | controller.instanceID.explicitID | string | `""` | Use a custom instanceID |
+    | controller.instanceID.useReleaseName | bool | `false` | Use ReleaseName as instanceID |
+    | controller.kubeConfig | object | `{}` (See [values.yaml]) | Configure when workflow controller runs in a different k8s cluster with the workflow workloads, or needs to communicate with the k8s apiserver using an out-of-cluster kubeconfig secret. |
+    | controller.links | list | `[]` | Configure Argo Server to show custom [links] |
+    | controller.livenessProbe | object | See [values.yaml] | Configure liveness [probe] for the controller |
+    | controller.loadBalancerClass | string | `""` | The class of the load balancer implementation |
+    | controller.loadBalancerSourceRanges | list | `[]` | Source ranges to allow access to service from. Only applies to service type `LoadBalancer` |
+    | controller.logging.format | string | `"text"` | Set the logging format (one of: `text`, `json`) |
+    | controller.logging.globallevel | string | `"0"` | Set the glog logging level |
+    | controller.logging.level | string | `"info"` | Set the logging level (one of: `debug`, `info`, `warn`, `error`) |
+    | controller.metricsConfig.enabled | bool | `false` | Enables prometheus metrics server |
+    | controller.metricsConfig.headlessService | bool | `false` | Flag to enable headless service |
+    | controller.metricsConfig.honorLabels | bool | `false` | When true, honorLabels preserves the metric’s labels when they collide with the target’s labels. |
+    | controller.metricsConfig.ignoreErrors | bool | `false` | Flag that instructs prometheus to ignore metric emission errors. |
+    | controller.metricsConfig.interval | string | `"30s"` | Frequency at which prometheus scrapes metrics |
+    | controller.metricsConfig.metricRelabelings | list | `[]` | ServiceMonitor metric relabel configs to apply to samples before ingestion |
+    | controller.metricsConfig.metricsTTL | string | `""` | How often custom metrics are cleared from memory |
+    | controller.metricsConfig.path | string | `"/metrics"` | Path is the path where metrics are emitted. Must start with a "/". |
+    | controller.metricsConfig.port | int | `9090` | Port is the port where metrics are emitted |
+    | controller.metricsConfig.portName | string | `"metrics"` | Container metrics port name |
+    | controller.metricsConfig.relabelings | list | `[]` | ServiceMonitor relabel configs to apply to samples before scraping |
+    | controller.metricsConfig.secure | bool | `false` | Flag that use a self-signed cert for TLS |
+    | controller.metricsConfig.servicePort | int | `8080` | Service metrics port |
+    | controller.metricsConfig.servicePortName | string | `"metrics"` | Service metrics port name |
+    | controller.metricsConfig.targetLabels | list | `[]` | ServiceMonitor will add labels from the service to the Prometheus metric |
+    | controller.name | string | `"workflow-controller"` | Workflow controller name string |
+    | controller.namespaceParallelism | string | `nil` | Limits the maximum number of incomplete workflows in a namespace |
+    | controller.navColor | string | `""` | Set ui navigation bar background color |
+    | controller.nodeEvents.enabled | bool | `true` | Enable to emit events on node completion. |
+    | controller.nodeSelector | object | `{"kubernetes.io/os":"linux"}` | [Node selector] |
+    | controller.parallelism | string | `nil` | parallelism dictates how many workflows can be running at the same time |
+    | controller.pdb.enabled | bool | `false` | Configure [Pod Disruption Budget] for the controller pods |
+    | controller.persistence | object | `{}` | enable Workflow Archive to store the status of workflows. Postgres and MySQL (>= 5.7.8) are available. |
+    | controller.podAnnotations | object | `{}` | podAnnotations is an optional map of annotations to be applied to the controller Pods |
+    | controller.podCleanupWorkers | string | `nil` | Number of pod cleanup workers |
+    | controller.podGCDeleteDelayDuration | string | `5s` (Argo Workflows default) | The duration in seconds before the pods in the GC queue get deleted. A zero value indicates that the pods will be deleted immediately. |
+    | controller.podGCGracePeriodSeconds | string | `30` seconds (Kubernetes default) | Specifies the duration in seconds before a terminating pod is forcefully killed. A zero value indicates that the pod will be forcefully terminated immediately. |
+    | controller.podLabels | object | `{}` | Optional labels to add to the controller pods |
+    | controller.podSecurityContext | object | `{}` | SecurityContext to set on the controller pods |
+    | controller.priorityClassName | string | `""` | Leverage a PriorityClass to ensure your pods survive resource shortages. |
+    | controller.rbac.accessAllSecrets | bool | `false` | Allows controller to get, list and watch all k8s secrets. Can only be used if secretWhitelist is empty. |
+    | controller.rbac.create | bool | `true` | Adds Role and RoleBinding for the controller. |
+    | controller.rbac.secretWhitelist | list | `[]` | Allows controller to get, list, and watch certain k8s secrets |
+    | controller.rbac.writeConfigMaps | bool | `false` | Allows controller to create and update ConfigMaps. Enables memoization feature |
+    | controller.replicas | int | `1` | The number of controller pods to run |
+    | controller.resourceRateLimit | object | `{}` | Globally limits the rate at which pods are created. This is intended to mitigate flooding of the Kubernetes API server by workflows with a large amount of parallel nodes. |
+    | controller.resources | object | `{}` | Resource limits and requests for the controller |
+    | controller.retentionPolicy | object | `{}` | Workflow retention by number of workflows |
+    | controller.revisionHistoryLimit | int | `10` | The number of revisions to keep. |
+    | controller.securityContext | object | `{"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]},"readOnlyRootFilesystem":true,"runAsNonRoot":true}` | the controller container's securityContext |
+    | controller.serviceAccount.annotations | object | `{}` | Annotations applied to created service account |
+    | controller.serviceAccount.create | bool | `true` | Create a service account for the controller |
+    | controller.serviceAccount.labels | object | `{}` | Labels applied to created service account |
+    | controller.serviceAccount.name | string | `""` | Service account name |
+    | controller.serviceAnnotations | object | `{}` | Annotations to be applied to the controller Service |
+    | controller.serviceLabels | object | `{}` | Optional labels to add to the controller Service |
+    | controller.serviceMonitor.additionalLabels | object | `{}` | Prometheus ServiceMonitor labels |
+    | controller.serviceMonitor.enabled | bool | `false` | Enable a prometheus ServiceMonitor |
+    | controller.serviceMonitor.namespace | string | `""` | Prometheus ServiceMonitor namespace |
+    | controller.serviceType | string | `"ClusterIP"` | Service type of the controller Service |
+    | controller.telemetryConfig.enabled | bool | `false` | Enables prometheus telemetry server |
+    | controller.telemetryConfig.ignoreErrors | bool | `false` | Flag that instructs prometheus to ignore metric emission errors. |
+    | controller.telemetryConfig.interval | string | `"30s"` | Frequency at which prometheus scrapes telemetry data |
+    | controller.telemetryConfig.metricsTTL | string | `""` | How often custom metrics are cleared from memory |
+    | controller.telemetryConfig.path | string | `"/telemetry"` | telemetry path |
+    | controller.telemetryConfig.port | int | `8081` | telemetry container port |
+    | controller.telemetryConfig.secure | bool | `false` | Flag that use a self-signed cert for TLS |
+    | controller.telemetryConfig.servicePort | int | `8081` | telemetry service port |
+    | controller.telemetryConfig.servicePortName | string | `"telemetry"` | telemetry service port name |
+    | controller.tolerations | list | `[]` | [Tolerations] for use with node taints |
+    | controller.topologySpreadConstraints | list | `[]` | Assign custom [TopologySpreadConstraints] rules to the workflow controller |
+    | controller.volumeMounts | list | `[]` | Additional volume mounts to the controller main container |
+    | controller.volumes | list | `[]` | Additional volumes to the controller pod |
+    | controller.workflowDefaults | object | `{}` | Default values that will apply to all Workflows from this controller, unless overridden on the Workflow-level. Only valid for 2.7+ |
+    | controller.workflowEvents.enabled | bool | `true` | Enable to emit events on workflow status changes. |
+    | controller.workflowNamespaces | list | `["default"]` | Specify all namespaces where this workflow controller instance will manage workflows. This controls where the service account and RBAC resources will be created. Only valid when singleNamespace is false. |
+    | controller.workflowRestrictions | object | `{}` | Restricts the Workflows that the controller will process. Only valid for 2.9+ |
+    | controller.workflowTTLWorkers | string | `nil` | Number of workflow TTL workers |
+    | controller.workflowWorkers | string | `nil` | Number of workflow workers |
+    
+    ### Workflow Main Container
+    
+    | Key | Type | Default | Description |
+    |-----|------|---------|-------------|
+    | mainContainer.env | list | `[]` | Adds environment variables for the Workflow main container |
+    | mainContainer.envFrom | list | `[]` | Adds reference environment variables for the Workflow main container |
+    | mainContainer.imagePullPolicy | string | `""` | imagePullPolicy to apply to Workflow main container. Defaults to `.Values.images.pullPolicy`. |
+    | mainContainer.resources | object | `{}` | Resource limits and requests for the Workflow main container |
+    | mainContainer.securityContext | object | `{}` | sets security context for the Workflow main container |
+    
+    ### Workflow Executor
+    
+    | Key | Type | Default | Description |
+    |-----|------|---------|-------------|
+    | executor.args | list | `[]` | Passes arguments to the executor processes |
+    | executor.env | list | `[]` | Adds environment variables for the executor. |
+    | executor.image.pullPolicy | string | `""` | Image PullPolicy to use for the Workflow Executors. Defaults to `.Values.images.pullPolicy`. |
+    | executor.image.registry | string | `"quay.io"` | Registry to use for the Workflow Executors |
+    | executor.image.repository | string | `"argoproj/argoexec"` | Repository to use for the Workflow Executors |
+    | executor.image.tag | string | `""` | Image tag for the workflow executor. Defaults to `.Values.images.tag`. |
+    | executor.resources | object | `{}` | Resource limits and requests for the Workflow Executors |
+    | executor.securityContext | object | `{}` | sets security context for the executor container |
+    
+    ### Workflow Server
+    
+    | Key | Type | Default | Description |
+    |-----|------|---------|-------------|
+    | server.GKEbackendConfig.enabled | bool | `false` | Enable BackendConfig custom resource for Google Kubernetes Engine |
+    | server.GKEbackendConfig.spec | object | `{}` | [BackendConfigSpec] |
+    | server.GKEfrontendConfig.enabled | bool | `false` | Enable FrontConfig custom resource for Google Kubernetes Engine |
+    | server.GKEfrontendConfig.spec | object | `{}` | [FrontendConfigSpec] |
+    | server.GKEmanagedCertificate.domains | list | `["argoworkflows.example.com"]` | Domains for the Google Managed Certificate |
+    | server.GKEmanagedCertificate.enabled | bool | `false` | Enable ManagedCertificate custom resource for Google Kubernetes Engine. |
+    | server.affinity | object | `{}` | Assign custom [affinity] rules |
+    | server.authMode | string | `""` | Deprecated; use server.authModes instead. |
+    | server.authModes | list | `[]` | A list of supported authentication modes. Available values are `server`, `client`, or `sso`. If you provide sso, please configure `.Values.server.sso` as well. |
+    | server.autoscaling.behavior | object | `{}` | Configures the scaling behavior of the target in both Up and Down directions. This is only available on HPA apiVersion `autoscaling/v2beta2` and newer |
+    | server.autoscaling.enabled | bool | `false` | Enable Horizontal Pod Autoscaler ([HPA]) for the Argo Server |
+    | server.autoscaling.maxReplicas | int | `5` | Maximum number of replicas for the Argo Server [HPA] |
+    | server.autoscaling.minReplicas | int | `1` | Minimum number of replicas for the Argo Server [HPA] |
+    | server.autoscaling.targetCPUUtilizationPercentage | int | `50` | Average CPU utilization percentage for the Argo Server [HPA] |
+    | server.autoscaling.targetMemoryUtilizationPercentage | int | `50` | Average memory utilization percentage for the Argo Server [HPA] |
+    | server.baseHref | string | `"/"` | Value for base href in index.html. Used if the server is running behind reverse proxy under subpath different from /. |
+    | server.clusterWorkflowTemplates.enableEditing | bool | `true` | Give the server permissions to edit ClusterWorkflowTemplates. |
+    | server.clusterWorkflowTemplates.enabled | bool | `true` | Create a ClusterRole and CRB for the server to access ClusterWorkflowTemplates. |
+    | server.deploymentAnnotations | object | `{}` | optional map of annotations to be applied to the ui Deployment |
+    | server.enabled | bool | `true` | Deploy the Argo Server |
+    | server.extraArgs | list | `[]` | Extra arguments to provide to the Argo server binary. |
+    | server.extraContainers | list | `[]` | Extra containers to be added to the server deployment |
+    | server.extraEnv | list | `[]` | Extra environment variables to provide to the argo-server container |
+    | server.extraInitContainers | list | `[]` | Enables init containers to be added to the server deployment |
+    | server.hostAliases | list | `[]` | Mapping between IP and hostnames that will be injected as entries in the pod's hosts files |
+    | server.image.registry | string | `"quay.io"` | Registry to use for the server |
+    | server.image.repository | string | `"argoproj/argocli"` | Repository to use for the server |
+    | server.image.tag | string | `""` | Image tag for the Argo Workflows server. Defaults to `.Values.images.tag`. |
+    | server.ingress.annotations | object | `{}` | Additional ingress annotations |
+    | server.ingress.enabled | bool | `false` | Enable an ingress resource |
+    | server.ingress.extraPaths | list | `[]` | Additional ingress paths |
+    | server.ingress.hosts | list | `[]` | List of ingress hosts |
+    | server.ingress.ingressClassName | string | `""` | Defines which ingress controller will implement the resource |
+    | server.ingress.labels | object | `{}` | Additional ingress labels |
+    | server.ingress.pathType | string | `"Prefix"` | Ingress path type. One of `Exact`, `Prefix` or `ImplementationSpecific` |
+    | server.ingress.paths | list | `["/"]` | List of ingress paths |
+    | server.ingress.tls | list | `[]` | Ingress TLS configuration |
+    | server.lifecycle | object | `{}` | Specify postStart and preStop lifecycle hooks for server container |
+    | server.loadBalancerClass | string | `""` | The class of the load balancer implementation |
+    | server.loadBalancerIP | string | `""` | Static IP address to assign to loadBalancer service type `LoadBalancer` |
+    | server.loadBalancerSourceRanges | list | `[]` | Source ranges to allow access to service from. Only applies to service type `LoadBalancer` |
+    | server.logging.format | string | `"text"` | Set the logging format (one of: `text`, `json`) |
+    | server.logging.globallevel | string | `"0"` | Set the glog logging level |
+    | server.logging.level | string | `"info"` | Set the logging level (one of: `debug`, `info`, `warn`, `error`) |
+    | server.name | string | `"server"` | Server name string |
+    | server.nodeSelector | object | `{"kubernetes.io/os":"linux"}` | [Node selector] |
+    | server.pdb.enabled | bool | `false` | Configure [Pod Disruption Budget] for the server pods |
+    | server.podAnnotations | object | `{}` | optional map of annotations to be applied to the ui Pods |
+    | server.podLabels | object | `{}` | Optional labels to add to the UI pods |
+    | server.podSecurityContext | object | `{}` | SecurityContext to set on the server pods |
+    | server.priorityClassName | string | `""` | Leverage a PriorityClass to ensure your pods survive resource shortages |
+    | server.rbac.create | bool | `true` | Adds Role and RoleBinding for the server. |
+    | server.replicas | int | `1` | The number of server pods to run |
+    | server.resources | object | `{}` | Resource limits and requests for the server |
+    | server.revisionHistoryLimit | int | `10` | The number of revisions to keep. |
+    | server.secure | bool | `false` | Run the argo server in "secure" mode. Configure this value instead of `--secure` in extraArgs. |
+    | server.securityContext | object | `{"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]},"readOnlyRootFilesystem":false,"runAsNonRoot":true}` | Servers container-level security context |
+    | server.serviceAccount.annotations | object | `{}` | Annotations applied to created service account |
+    | server.serviceAccount.create | bool | `true` | Create a service account for the server |
+    | server.serviceAccount.labels | object | `{}` | Labels applied to created service account |
+    | server.serviceAccount.name | string | `""` | Service account name |
+    | server.serviceAnnotations | object | `{}` | Annotations to be applied to the UI Service |
+    | server.serviceLabels | object | `{}` | Optional labels to add to the UI Service |
+    | server.serviceNodePort | string | `nil` | Service node port |
+    | server.servicePort | int | `2746` | Service port for server |
+    | server.servicePortName | string | `""` | Service port name |
+    | server.serviceType | string | `"ClusterIP"` | Service type for server pods |
+    | server.sso.clientId.key | string | `"client-id"` | Key of secret to retrieve the app OIDC client ID |
+    | server.sso.clientId.name | string | `"argo-server-sso"` | Name of secret to retrieve the app OIDC client ID |
+    | server.sso.clientSecret.key | string | `"client-secret"` | Key of a secret to retrieve the app OIDC client secret |
+    | server.sso.clientSecret.name | string | `"argo-server-sso"` | Name of a secret to retrieve the app OIDC client secret |
+    | server.sso.customGroupClaimName | string | `""` | Override claim name for OIDC groups |
+    | server.sso.enabled | bool | `false` | Create SSO configuration. If you set `true` , please also set `.Values.server.authModes` as `sso`. |
+    | server.sso.filterGroupsRegex | list | `[]` | Filter the groups returned by the OIDC provider |
+    | server.sso.insecureSkipVerify | bool | `false` | Skip TLS verification for the HTTP client |
+    | server.sso.issuer | string | `"https://accounts.google.com"` | The root URL of the OIDC identity provider |
+    | server.sso.issuerAlias | string | `""` | Alternate root URLs that can be included for some OIDC providers |
+    | server.sso.rbac.enabled | bool | `true` | Adds ServiceAccount Policy to server (Cluster)Role. |
+    | server.sso.rbac.secretWhitelist | list | `[]` | Whitelist to allow server to fetch Secrets |
+    | server.sso.redirectUrl | string | `""` | The OIDC redirect URL. Should be in the form <argo-root-url>/oauth2/callback. |
+    | server.sso.scopes | list | `[]` | Scopes requested from the SSO ID provider |
+    | server.sso.sessionExpiry | string | `""` | Define how long your login is valid for (in hours) |
+    | server.sso.userInfoPath | string | `""` | Specify the user info endpoint that contains the groups claim |
+    | server.terminationGracePeriodSeconds | int | `30` | terminationGracePeriodSeconds for container lifecycle hook |
+    | server.tmpVolume | object | `{"emptyDir":{}}` | Volume to be mounted in Pods for temporary files. |
+    | server.tolerations | list | `[]` | [Tolerations] for use with node taints |
+    | server.topologySpreadConstraints | list | `[]` | Assign custom [TopologySpreadConstraints] rules to the argo server |
+    | server.volumeMounts | list | `[]` | Additional volume mounts to the server main container. |
+    | server.volumes | list | `[]` | Additional volumes to the server pod. |
+    
+    ### Artifact Repository
+    
+    | Key | Type | Default | Description |
+    |-----|------|---------|-------------|
+    | artifactRepository.archiveLogs | bool | `false` | Archive the main container logs as an artifact |
+    | artifactRepository.azure | object | `{}` (See [values.yaml]) | Store artifact in Azure Blob Storage |
+    | artifactRepository.gcs | object | `{}` (See [values.yaml]) | Store artifact in a GCS object store |
+    | artifactRepository.s3 | object | See [values.yaml] | Store artifact in a S3-compliant object store |
+    | artifactRepositoryRef | object | `{}` (See [values.yaml]) | The section of [artifact repository ref](https://argo-workflows.readthedocs.io/en/stable/artifact-repository-ref/). Each map key is the name of configmap |
+    | customArtifactRepository | object | `{}` | The section of custom artifact repository. Utilize a custom artifact repository that is not one of the current base ones (s3, gcs, azure) |
+    | useStaticCredentials | bool | `true` | Use static credentials for S3 (eg. when not using AWS IRSA) |
+    
+    ## Breaking changes from the deprecated `argo` chart
+    
+    1. the `installCRD` value has been removed. CRDs are now only installed from the conventional crds/ directory
+    1. the CRDs were updated to `apiextensions.k8s.io/v1`
+    1. the container image registry/project/tag format was changed to be more in line with the more common
+    
+       ```yaml
+       image:
+         registry: quay.io
+         repository: argoproj/argocli
+         tag: v3.0.1
+       ```
+    
+       this also makes it easier for automatic update tooling (eg. renovate bot) to detect and update images.
+    
+    1. switched to quay.io as the default registry for all images
+    1. removed any included usage of Minio
+    1. aligned the configuration of serviceAccounts with the argo-cd chart, ie: what used to be `server.createServiceAccount` is now `server.serviceAccount.create`
+    1. moved the field previously known as `telemetryServicePort` inside the `telemetryConfig` as `telemetryConfig.servicePort` - same for `metricsConfig`
+    
+    [affinity]: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
+    [BackendConfigSpec]: https://cloud.google.com/kubernetes-engine/docs/concepts/backendconfig#backendconfigspec_v1beta1_cloudgooglecom
+    [FrontendConfigSpec]: https://cloud.google.com/kubernetes-engine/docs/how-to/ingress-features#configuring_ingress_features_through_frontendconfig_parameters
+    [links]: https://argo-workflows.readthedocs.io/en/stable/links/
+    [columns]: https://github.com/argoproj/argo-workflows/pull/10693
+    [Node selector]: https://kubernetes.io/docs/user-guide/node-selection/
+    [Pod Disruption Budget]: https://kubernetes.io/docs/tasks/run-application/configure-pdb/
+    [probe]: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#container-probes
+    [Tolerations]: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+    [TopologySpreadConstraints]: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/
+    [values.yaml]: values.yaml
+    [changelog]: https://artifacthub.io/packages/helm/argo/argo-workflows?modal=changelog
+    [SSO RBAC]: https://argo-workflows.readthedocs.io/en/stable/argo-server-sso/
+    [Argo Server Auth Mode]: https://argo-workflows.readthedocs.io/en/stable/argo-server-auth-mode/
+    
+icon: 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

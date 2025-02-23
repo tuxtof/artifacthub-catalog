@@ -1,0 +1,8 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: klt-0.2.6-defaults
+  namespace: ${releaseNamespace}
+data:
+  values.yaml: |

@@ -1,0 +1,89 @@
+displayName: artifact-hub
+description: Artifact Hub is a web-based application that enables finding, installing, and publishing Cloud Native packages.
+category:
+- artifact-hub
+type: catalog
+allowMultipleInstances: false
+scope:
+- workspace
+licensing:
+- Ultimate
+- Enterprise
+certifications:
+overview: |
+    # Artifact Hub
+    
+    [Artifact Hub](https://artifacthub.io) is a web-based application that enables finding, installing, and publishing Cloud Native packages.
+    
+    ## Introduction
+    
+    This chart bootstraps an Artifact Hub deployment on a [Kubernetes](http://kubernetes.io) cluster using the [Helm](https://helm.sh) package manager.
+    
+    ## Installing the Chart
+    
+    **Security note**: please review carefully all the configuration options available before deploying Artifact Hub in a production environment. The default values are just intended to provide users with a quick and easy way to try the software.
+    
+    To install the chart with the release name `hub` run:
+    
+    ```bash
+    $ helm repo add artifact-hub https://artifacthub.github.io/helm-charts
+    $ helm install hub artifact-hub/artifact-hub
+    ```
+    
+    The command deploys Artifact Hub on the Kubernetes cluster using the default configuration. The [configuration](#configuration) section lists the parameters that can be configured during installation.
+    
+    As soon as all pods are up and running, you can access the Artifact Hub by visiting the address specified in your Ingress object in your browser (`http://192.168.64.18` in the case shown below).
+    
+    ```bash
+    $ kubectl get ingress
+    NAME   HOSTS   ADDRESS         PORTS   AGE
+    hub    *       192.168.64.18   80      6s
+    ```
+    
+    When the parameter `dbMigrator.loadSampleData` is set to true (default) a **demo** user and a couple of sample repositories are registered automatically. The credentials for the demo user are: `demo@artifacthub.io` / `changeme`. You can change the password from the control panel once you log in.
+    
+    ## Populating packages
+    
+    The chart installs one `cronjob` in charge of launching periodically (every 30m) the tracker, which indexes packages from the registered repositories. Some sample repositories are added by default when `dbMigrator.loadSampleData` is set to true. If you don't want to wait until the job is triggered by the cronjob, you can create one manually using the following command:
+    
+    ```bash
+    $ kubectl create job initial-tracker-job --from=cronjob/tracker
+    ```
+    
+    ## Packages security reports
+    
+    The chart installs another `cronjob` in charge of launching periodically (every hour) the scanner, which scans packages' images for security vulnerabilities, generating security reports for them. If you don't want to wait until the job is triggered by the cronjob, you can create one manually using the following command:
+    
+    ```bash
+    $ kubectl create job initial-scanner-job --from=cronjob/scanner
+    ```
+    
+    ## Uninstalling the Chart
+    
+    To uninstall the `hub` deployment run:
+    
+    ```bash
+    $ helm uninstall hub
+    ```
+    
+    The command removes all the Kubernetes components associated with the chart and deletes the release.
+    
+    ## Configuration
+    
+    Please see the [values schema reference documentation in Artifact Hub](https://artifacthub.io/packages/helm/artifact-hub/artifact-hub?modal=values-schema) for a list of the configurable parameters of the chart and their default values.
+    
+    Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,
+    
+    ```bash
+    $ helm install hub \
+      --set dbMigrator.loadSampleData=false \
+      artifact-hub/artifact-hub
+    ```
+    
+    Alternatively, a YAML file that specifies the values for the parameters can be provided while installing the chart. For example,
+    
+    ```bash
+    $ helm install hub -f values.yaml artifact-hub/artifact-hub
+    ```
+    
+icon: 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

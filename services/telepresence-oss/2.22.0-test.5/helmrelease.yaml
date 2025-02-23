@@ -1,0 +1,25 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: telepresence-oss
+  namespace: ${releaseNamespace}
+spec:
+  chart:
+    spec:
+      chart: telepresence-oss
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: telepresence-oss
+        namespace: ${releaseNamespace}
+      version: 2.22.0-test.5
+  interval: 1m0s
+  targetNamespace: ${releaseNamespace}
+  releaseName: telepresence-oss
+  valuesFrom:
+    - kind: ConfigMap
+      name: telepresence-oss-2.22.0-test.5-defaults
+    - kind: ConfigMap
+      name: telepresence-oss-overrides
+      optional: true

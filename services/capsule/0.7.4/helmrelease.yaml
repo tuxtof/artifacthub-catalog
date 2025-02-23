@@ -1,0 +1,25 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: capsule
+  namespace: ${releaseNamespace}
+spec:
+  chart:
+    spec:
+      chart: capsule
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: projectcapsule
+        namespace: ${releaseNamespace}
+      version: 0.7.4
+  interval: 1m0s
+  targetNamespace: ${releaseNamespace}
+  releaseName: capsule
+  valuesFrom:
+    - kind: ConfigMap
+      name: capsule-0.7.4-defaults
+    - kind: ConfigMap
+      name: capsule-overrides
+      optional: true

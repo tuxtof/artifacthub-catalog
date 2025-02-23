@@ -1,0 +1,8 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: policy-reporter-3.0.4-defaults
+  namespace: ${releaseNamespace}
+data:
+  values.yaml: |

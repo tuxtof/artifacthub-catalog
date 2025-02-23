@@ -1,0 +1,43 @@
+displayName: keptn
+description: A Helm chart for Keptn, a set of tools to enable cloud-native application lifecycle management
+category:
+- artifact-hub
+type: catalog
+allowMultipleInstances: false
+scope:
+- workspace
+licensing:
+- Ultimate
+- Enterprise
+certifications:
+overview: |
+    # Keptn Helm Chart
+    
+    Keptn provides a “cloud-native” approach for managing the application release lifecycle
+    metrics, observability, health checks, with pre- and post-deployment evaluations and tasks.
+    
+    <!-- markdownlint-disable MD012 -->
+    
+    ## Parameters
+    
+    ### Keptn
+    
+    | Name                        | Description                                           | Value  |
+    | --------------------------- | ----------------------------------------------------- | ------ |
+    | `lifecycleOperator.enabled` | Enable this value to install Keptn Lifecycle Operator | `true` |
+    | `metricsOperator.enabled`   | Enable this value to install Keptn Metrics Operator   | `true` |
+    
+    ### Global parameters
+    
+    | Name                            | Description                                                               | Value     |
+    | ------------------------------- | ------------------------------------------------------------------------- | --------- |
+    | `global.certManagerEnabled`     | Enable this value to install Keptn Certificate Manager                    | `true`    |
+    | `global.imageRegistry`          | Global Docker image registry                                              | `ghcr.io` |
+    | `global.imagePullSecrets`       | Global Docker registry secret names as an array                           | `[]`      |
+    | `global.imagePullPolicy`        | Policy for pulling Docker images. Options: Always, IfNotPresent, Never    | `""`      |
+    | `global.commonLabels`           | Common labels to add to all Keptn resources. Evaluated as a template      | `{}`      |
+    | `global.commonAnnotations`      | Common annotations to add to all Keptn resources. Evaluated as a template | `{}`      |
+    | `global.caInjectionAnnotations` | CA injection annotations for cert-manager.io configuration                | `{}`      |
+    | `global.openShift.enabled`      | Enable this value to install on Openshift                                 | `false`   |
+    
+icon: PHN2ZyBpZD0iTGF5ZXJfMSIgZGF0YS1uYW1lPSJMYXllciAxIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzNjAgMzYwIj48ZGVmcz48c3R5bGU+LmNscy0xe2ZpbGw6IzAwNmJiODt9PC9zdHlsZT48L2RlZnM+PHBhdGggY2xhc3M9ImNscy0xIiBkPSJNMzE0LjE5NDExLDY3LjQzOTY1bC0yMC4wNzUzNi05Ljc3MjEzTDc4LjcwNjg3LDMyNS41NTE1MWwxMy44MDg0NSwxNy41MjYxMWMuNzQzNTMuODQ5NzQsMS40ODcwNywxLjY5OTUxLDIuMjMwNTksMi40NDNMMzE3LjE2ODIyLDY5LjEzOTE1QTE2LjUzNzE5LDE2LjUzNzE5LDAsMCwwLDMxNC4xOTQxMSw2Ny40Mzk2NVoiLz48cG9seWdvbiBjbGFzcz0iY2xzLTEiIHBvaW50cz0iMTIyLjM2MyAzNTIgMTU0LjY1MyAzNTIgMzM2LjE4MSAxMjYuMTc5IDMyOS4yNzcgOTQuNjMyIDEyMi4zNjMgMzUyIi8+PHBvbHlnb24gY2xhc3M9ImNscy0xIiBwb2ludHM9IjI0Ny4zODIgMzUuMDQzIDE0Ny4wMDYgMTU5Ljg1IDE0Ny4wMDYgMTU5Ljg1IDE0Ny4wMDYgMTU5Ljg1IDQ2LjUyMyAyODQuNzYzIDYyLjQ1NSAzMDUuMDUxIDI3MC41MzggNDYuMzAyIDI0Ny4zODIgMzUuMDQzIi8+PHBhdGggY2xhc3M9ImNscy0xIiBkPSJNMjQ3LjE3LDM1MmEyMy43NDI1OSwyMy43NDI1OSwwLDAsMCwxOC4zNzU4NS04LjgxNjE1bDg1LjgyNDg3LTEwNi44NTYxOWEyMy41OTc2OSwyMy41OTc2OSwwLDAsMCw0LjY3MzYzLTE5Ljg2MjkzbC0xMi43NDYyNy01OC4zMTQxN0wxODcuMzY4NzcsMzUyWiIvPjxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTEyMy45NTYxLDExNC44MTMyOGEyMC43MDI1OSwyMC43MDI1OSwwLDEsMCwzLjE4NjU3LDI5LjEwNGgwQTIwLjcyOTI4LDIwLjcyOTI4LDAsMCwwLDEyMy45NTYxLDExNC44MTMyOFoiLz48cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik04MS45OTk2NSwxNjYuOTY2NzNhNDYuMjMyNjcsNDYuMjMyNjcsMCwwLDEsNTcuOTk1NTEtNzIuMDE2MzksNDUuMDkwODYsNDUuMDkwODYsMCwwLDEsMTMuMDY0OTIsMTYuNzgyNThsNzAuODQ4LTg4LjA1NTQ1TDE5MS45MzYxOCw4LjE2OTUyYTIzLjY1ODU0LDIzLjY1ODU0LDAsMCwwLTIwLjM5NCwwTDQ4LjIyMjA1LDY3LjQzOTY1QTIzLjMyNywyMy4zMjcsMCwwLDAsMzkuMjk5NjYsNzQuODc1YTI0LjgzNjkzLDI0LjgzNjkzLDAsMCwwLTMuOTMwMSw4LjQ5NzUxTDQuMDM1LDIxNi41NzA5NEEyMy4yODM0MiwyMy4yODM0MiwwLDAsMCw4LjM5LDIzNi40MzM4OGwyMS45ODczLDI3LjgyOTM2LDcwLjg0OC04OC4xNjE2NkE0Ni41Mjc4Niw0Ni41Mjc4NiwwLDAsMSw4MS45OTk2NSwxNjYuOTY2NzNaIi8+PC9zdmc+

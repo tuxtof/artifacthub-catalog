@@ -1,0 +1,331 @@
+displayName: capsule-proxy
+description: Helm Chart for Capsule Proxy, addon for Capsule, the multi-tenant Operator
+category:
+- artifact-hub
+type: catalog
+allowMultipleInstances: false
+scope:
+- workspace
+licensing:
+- Ultimate
+- Enterprise
+certifications:
+overview: |
+    # Deploying the Capsule-proxy
+    
+    This project is an add-on for [Capsule](https://github.com/projectcapsule/capsule), the operator providing multi-tenancy in Kubernetes.
+    
+    ## Requirements
+    
+    * [Helm 3](https://github.com/helm/helm/releases) is required when installing the Capsule-proxy chart. Follow Helm’s official [steps](https://helm.sh/docs/intro/install/) for installing helm on your particular operating system.
+    
+    * A Kubernetes cluster 1.16+ with [Capsule](https://github.com/projectcapsule/capsule) installed and following [Admission Controllers](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/) enabled:
+    
+        * PodNodeSelector
+        * LimitRanger
+        * ResourceQuota
+        * MutatingAdmissionWebhook
+        * ValidatingAdmissionWebhook
+    
+    * A [`kubeconfig`](https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/) file accessing the Kubernetes cluster with cluster admin permissions.
+    
+    ## Quick Start
+    
+    The Capsule-proxy Chart can be used to instantly deploy the Capsule-proxy on your Kubernetes cluster.
+    
+    1. Add this repository:
+    
+            $ helm repo add projectcapsule https://projectcapsule.github.io/charts
+    
+    2. Install the Chart:
+    
+            $ helm install capsule-proxy projectcapsule/capsule-proxy -n capsule-system
+    
+    3. Show the status:
+    
+            $ helm status capsule-proxy -n capsule-system
+    
+    4. Upgrade the Chart
+    
+            $ helm upgrade capsule-proxy projectcapsule/capsule-proxy -n capsule-system
+    
+    5. Uninstall the Chart
+    
+            $ helm uninstall capsule-proxy -n capsule-system
+    
+    ## Upgrading the Chart
+    
+    Intsructions to upgrade the chart the versions, which may remove features or introduce breaking changes.
+    
+    ### 0.7.x
+    
+    Introduces a new methode to manage all capsule-proxy CRDs and their lifecycle. We are no longer relying on the [native CRD hook with the Helm Chart](https://helm.sh/docs/chart_best_practices/custom_resource_definitions/#some-caveats-and-explanations). The hook only allows to manage CRDs on install and uninstall but we can't deliver updates to the CRDs.
+    When you newly install the chart we recommend to set  `crds.install` to `true`. This will manage the CRDs with the Helm Chart.
+    
+    If you are upgrading to this release, you can choose to set `global.crds.install` to `true` (by default `false`). However you need to add metadata to the existing CRDs so they can be correctly managed with the new flow. Run the following commands:
+    
+    ```bash
+    kubectl label crd proxysettings.capsule.clastix.io  app.kubernetes.io/managed-by=Helm
+    kubectl annotate crd proxysettings.capsule.clastix.io meta.helm.sh/release-namespace=capsule-system # might be different
+    kubectl annotate crd proxysettings.capsule.clastix.io meta.helm.sh/release-name=capsule-proxy # might be different
+    ```
+    
+    With the new CRD management we can release update CRDs bundled with the chart. The Chart can be uninstalled and the CRDs are still kept.
+    
+    ## Customize the installation
+    
+    > When using **OCI** we recommend our dedicated [OCI Repository]() for this chart
+    
+    There are two methods for specifying overrides of values during chart installation: `--values` and `--set`.
+    
+    The `--values` option is the preferred method because it allows you to keep your overrides in a YAML file, rather than specifying them all on the command line. Create a copy of the YAML file `values.yaml` and add your overrides to it.
+    
+    Specify your overrides file when you install the chart:
+    
+            $ helm install capsule-proxy projectcapsule/capsule-proxy --values myvalues.yaml -n capsule-system
+    
+    The values in your overrides file `myvalues.yaml` will override their counterparts in the chart’s values.yaml file. Any values in `values.yaml` that weren’t overridden will keep their defaults.
+    
+    If you only need to make minor customizations, you can specify them on the command line by using the `--set` option. For example:
+    
+            $ helm install capsule-proxy projectcapsule/capsule-proxy --set "kind=DaemonSet" -n capsule-system
+    
+    ### CustomResourceDefinition Lifecycle
+    
+    | Key | Type | Default | Description |
+    |-----|------|---------|-------------|
+    | crds.annnotations | object | `{}` | Extra Annotations for CRDs |
+    | crds.install | bool | `true` | Install the CustomResourceDefinitions (This also manages the lifecycle of the CRDs for update operations) |
+    | crds.keep | bool | `true` | Keep the CustomResourceDefinitions (when the chart is deleted) |
+    | crds.labels | object | `{}` | Extra Labels for CRDs |
+    
+    ### Global Parameters
+    
+    | Key | Type | Default | Description |
+    |-----|------|---------|-------------|
+    | global.jobs.certs.affinity | object | `{}` | Set affinity rules |
+    | global.jobs.certs.annotations | object | `{}` | Annotations to add to the certgen job. |
+    | global.jobs.certs.image.pullPolicy | string | `"IfNotPresent"` | Set the image pull policy of the post install certgen job |
+    | global.jobs.certs.image.registry | string | `"registry.k8s.io"` | Set the image repository of the post install certgen job |
+    | global.jobs.certs.image.repository | string | `"ingress-nginx/kube-webhook-certgen"` | Set the image repository of the post install certgen job |
+    | global.jobs.certs.image.tag | string | `"v1.4.3"` | Set the image tag of the post install certgen job |
+    | global.jobs.certs.nodeSelector | object | `{}` | Set the node selector |
+    | global.jobs.certs.podSecurityContext | object | `{"seccompProfile":{"type":"RuntimeDefault"}}` | Security context for the job pods. |
+    | global.jobs.certs.priorityClassName | string | `""` | Set a pod priorityClassName |
+    | global.jobs.certs.resources | object | `{}` | Job resources |
+    | global.jobs.certs.restartPolicy | string | `"Never"` | Set the restartPolicy |
+    | global.jobs.certs.securityContext | object | `{"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]},"readOnlyRootFilesystem":true,"runAsGroup":1002,"runAsNonRoot":true,"runAsUser":1002}` | Security context for the job containers. |
+    | global.jobs.certs.tolerations | list | `[]` | Set list of tolerations |
+    | global.jobs.certs.topologySpreadConstraints | list | `[]` | Set Topology Spread Constraints |
+    | global.jobs.certs.ttlSecondsAfterFinished | int | `60` | Sets the ttl in seconds after a finished certgen job is deleted. Set to -1 to never delete. |
+    | global.jobs.kubectl.affinity | object | `{}` | Set affinity rules |
+    | global.jobs.kubectl.annotations | object | `{}` | Annotations |
+    | global.jobs.kubectl.image.pullPolicy | string | `"IfNotPresent"` | Set the image pull policy of the helm chart job |
+    | global.jobs.kubectl.image.registry | string | `"docker.io"` | Set the image repository of the helm chart job |
+    | global.jobs.kubectl.image.repository | string | `"clastix/kubectl"` | Set the image repository of the helm chart job |
+    | global.jobs.kubectl.image.tag | string | `""` | Set the image tag of the helm chart job |
+    | global.jobs.kubectl.nodeSelector | object | `{}` | Set the node selector |
+    | global.jobs.kubectl.podSecurityContext | object | `{"seccompProfile":{"type":"RuntimeDefault"}}` | Security context for the job pods. |
+    | global.jobs.kubectl.priorityClassName | string | `""` | Set a pod priorityClassName |
+    | global.jobs.kubectl.resources | object | `{}` | Job resources |
+    | global.jobs.kubectl.restartPolicy | string | `"Never"` | Set the restartPolicy |
+    | global.jobs.kubectl.securityContext | object | `{"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]},"readOnlyRootFilesystem":true,"runAsGroup":1002,"runAsNonRoot":true,"runAsUser":1002}` | Security context for the job containers. |
+    | global.jobs.kubectl.tolerations | list | `[]` | Set list of tolerations |
+    | global.jobs.kubectl.topologySpreadConstraints | list | `[]` | Set Topology Spread Constraints |
+    | global.jobs.kubectl.ttlSecondsAfterFinished | int | `60` | Sets the ttl in seconds after a finished certgen job is deleted. Set to -1 to never delete. |
+    
+    ### General Parameters
+    
+    | Key | Type | Default | Description |
+    |-----|------|---------|-------------|
+    | affinity | object | `{}` | Set affinity rules for the capsule-proxy pod. |
+    | crds.annnotations | object | `{}` | Extra Annotations for CRDs |
+    | crds.install | bool | `true` | Install the CustomResourceDefinitions (This also manages the lifecycle of the CRDs for update operations) |
+    | crds.keep | bool | `true` | Keep the CustomResourceDefinitions (when the chart is deleted) |
+    | crds.labels | object | `{}` | Extra Labels for CRDs |
+    | daemonset.hostNetwork | bool | `false` | Use the host network namespace for capsule-proxy pod. |
+    | daemonset.hostPort | bool | `false` | Binding the capsule-proxy listening port to the host port. |
+    | env | list | `[]` | Additional environment variables |
+    | hostNetwork | bool | `false` | When deployed as DaemonSet use |
+    | image.pullPolicy | string | `"IfNotPresent"` | Set the image pull policy. |
+    | image.registry | string | `"ghcr.io"` | Set the image registry for capsule-proxy |
+    | image.repository | string | `"projectcapsule/capsule-proxy"` | Set the image repository for capsule-proxy. |
+    | image.tag | string | `""` | Overrides the image tag whose default is the chart appVersion. |
+    | imagePullSecrets | list | `[]` | Configuration for `imagePullSecrets` so that you can use a private images registry. |
+    | jobs | object | `{"certs":{}}` | Deprecated: Use `global.jobs.certs` instead |
+    | kind | string | `"Deployment"` | Set the deployment mode of the capsule-proxy as `Deployment` or `DaemonSet`. |
+    | livenessProbe | object | `{"enabled":true,"httpGet":{"path":"/healthz/","port":"probe","scheme":"HTTP"},"initialDelaySeconds":20}` | Proxy Liveness-Probe |
+    | nodeSelector | object | `{}` | Set the node selector for the capsule-proxy pod. |
+    | podAnnotations | object | `{}` | Annotations to add to the capsule-proxy pod. |
+    | podLabels | object | `{}` | Labels to add to the capsule-proxy pod. |
+    | podSecurityContext | object | `{"seccompProfile":{"type":"RuntimeDefault"}}` | Security context for the capsule-proxy pod. |
+    | priorityClassName | string | `""` | Specifies PriorityClass of the capsule-proxy pod. |
+    | rbac.clusterRole | string | `"cluster-admin"` | Controller ClusterRole |
+    | rbac.enabled | bool | `true` | Enable Creation of ClusterRoles |
+    | readinessProbe | object | `{"enabled":true,"httpGet":{"path":"/readyz/","port":"probe","scheme":"HTTP"},"initialDelaySeconds":5}` | Proxy Readyness-Probe |
+    | replicaCount | int | `1` | Set the replica count for capsule-proxy pod. |
+    | resources.limits.cpu | string | `"200m"` | Set the CPU requests assigned to the controller. |
+    | resources.limits.memory | string | `"128Mi"` | Set the memory requests assigned to the controller. |
+    | resources.requests.cpu | string | `"200m"` | Set the CPU limits assigned to the controller. |
+    | resources.requests.memory | string | `"128Mi"` | Set the memory limits assigned to the controller. |
+    | restartPolicy | string | `"Always"` | Set the restartPolicy for the capsule-proxy pod. |
+    | securityContext | object | `{"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]},"readOnlyRootFilesystem":true,"runAsGroup":1002,"runAsNonRoot":true,"runAsUser":1002}` | Security context for the capsule-proxy container. |
+    | serviceAccount.annotations | object | `{}` | Annotations to add to the service account. |
+    | serviceAccount.create | bool | `true` | Specifies whether a service account should be created. |
+    | serviceAccount.name | string | `capsule-proxy` | The name of the service account to use. If not set and `serviceAccount.create=true`, a name is generated using the fullname template |
+    | tolerations | list | `[]` | Set list of tolerations for the capsule-proxy pod. |
+    | topologySpreadConstraints | list | `[]` | Topology Spread Constraints for the capsule-proxy pod. |
+    | volumeMounts | list | `[]` | Additional volume mounts |
+    | volumes | list | `[]` | Additional volumes |
+    
+    ### Controller Options Parameters
+    
+    | Key | Type | Default | Description |
+    |-----|------|---------|-------------|
+    | options.SSLCertFileName | string | `"tls.crt"` | Set the name of SSL certificate file |
+    | options.SSLDirectory | string | `"/opt/capsule-proxy"` | Set the directory, where SSL certificate and keyfile will be located |
+    | options.SSLKeyFileName | string | `"tls.key"` | Set the name of SSL key file |
+    | options.additionalSANs | list | `[]` | Specify additional subject alternative names for the self-signed SSL |
+    | options.authPreferredTypes | string | `"BearerToken,TLSCertificate"` | Authentication types to be used for requests. Possible Auth Types: [BearerToken, TLSCertificate] |
+    | options.capsuleConfigurationName | string | `"default"` | Name of the CapsuleConfiguration custom resource used by Capsule, required to identify the user groups |
+    | options.certificateVolumeName | string | `""` | Specify an override for the Secret containing the certificate for SSL. Default value is empty and referring to the generated certificate. |
+    | options.clientConnectionBurst | int | `30` | Burst to use for interacting with kubernetes API Server. |
+    | options.clientConnectionQPS | int | `20` | QPS to use for interacting with Kubernetes API Server. |
+    | options.disableCaching | bool | `false` | Disable the go-client caching to hit directly the Kubernetes API Server, it disables any local caching as the rolebinding reflector |
+    | options.enableSSL | bool | `true` | Specify if capsule-proxy will use SSL |
+    | options.extraArgs | list | `[]` | A list of extra arguments to add to the capsule-proxy. |
+    | options.generateCertificates | bool | `true` | Specify if capsule-proxy will generate self-signed SSL certificates |
+    | options.ignoredUserGroups | list | `[]` | Define which groups must be ignored while proxying requests |
+    | options.listeningPort | int | `9001` | Set the listening port of the capsule-proxy |
+    | options.logLevel | string | `"4"` | Set the log verbosity of the capsule-proxy with a value from 1 to 10 |
+    | options.oidcUsernameClaim | string | `"preferred_username"` | Specify if capsule-proxy will use SSL |
+    | options.pprof | bool | `false` | Enable Pprof for profiling |
+    | options.rolebindingsResyncPeriod | string | `"10h"` | Set the role bindings reflector resync period, a local cache to store mappings between users and their namespaces. [Use a lower value in case of flaky etcd server connections.](https://github.com/projectcapsule/capsule-proxy/issues/174) |
+    | options.webhookPort | int | `9443` | Webhook port |
+    
+    ### Cert-Manager Parameters
+    
+    You can manage the certificate with the help of [cert-manager](https://cert-manager.io/docs/). By default the chart will create a self-signed certificate.
+    
+    | Key | Type | Default | Description |
+    |-----|------|---------|-------------|
+    | certManager.certificate.dnsNames | list | `[]` | Additional DNS Names to include in certificate |
+    | certManager.certificate.fields | object | `{"privateKey":{"rotationPolicy":"Always"}}` | Additional fields to include in certificate |
+    | certManager.certificate.includeInternalServiceNames | bool | `true` | Include internal service names in certificate (disable if you create a public cert) |
+    | certManager.certificate.ipAddresses | list | `[]` | Additional IP Addresses to include in certificate |
+    | certManager.certificate.uris | list | `[]` | Additional URIs to include in certificate |
+    | certManager.externalCA.enabled | bool | `false` | Set if want cert manager to sign certificates with an external CA |
+    | certManager.externalCA.secretName | string | `""` |  |
+    | certManager.generateCertificates | bool | `false` | Set if the cert manager will generate SSL certificates (self-signed or CA-signed) |
+    | certManager.issuer.kind | string | `"Issuer"` | Set if the cert manager will generate either self-signed or CA signed SSL certificates. Its value will be either Issuer or ClusterIssuer |
+    | certManager.issuer.name | string | `""` | Set the name of the ClusterIssuer if issuer kind is ClusterIssuer and if cert manager will generate CA signed SSL certificates |
+    
+    ### Webhook Parameters
+    
+    | Key | Type | Default | Description |
+    |-----|------|---------|-------------|
+    | webhooks.certificate.dnsNames | list | `[]` | Additional DNS Names to include in certificate |
+    | webhooks.certificate.fields | object | `{"privateKey":{"rotationPolicy":"Always"}}` | Additional fields to include in certificate |
+    | webhooks.certificate.ipAddresses | list | `[]` | Additional IP Addresses to include in certificate |
+    | webhooks.certificate.uris | list | `[]` | Additional URIs to include in certificate |
+    | webhooks.enabled | bool | `false` | Enable the usage of mutating and validating webhooks |
+    | webhooks.service.caBundle | string | `""` | CABundle for the webhook service |
+    | webhooks.service.name | string | `""` | Custom service name for the webhook service |
+    | webhooks.service.namespace | string | `""` | Custom service namespace for the webhook service |
+    | webhooks.service.port | string | `nil` | Custom service port for the webhook service |
+    | webhooks.service.url | string | `""` | The URL where the capsule webhook services are running (Overwrites cluster scoped service definition) |
+    | webhooks.watchdog.enabled | bool | `true` | Enable Watchdog Webhook |
+    | webhooks.watchdog.failurePolicy | string | `"Ignore"` | Ignore failures from the webhook |
+    | webhooks.watchdog.namespaceSelector | object | `{"matchExpressions":[{"key":"capsule.clastix.io/tenant","operator":"Exists"}]}` | Selects only namespaced items which are within a tenant |
+    | webhooks.watchdog.rules | list | `[{"apiGroups":["*"],"apiVersions":["*"],"operations":["CREATE","UPDATE"],"resources":["*"],"scope":"Namespaced"}]` | Rules for which Objects and Actions this webhook should be called |
+    | webhooks.watchdog.timeoutSeconds | string | `"3s"` | Timeout in seconds for mutating webhooks |
+    
+    ### Service Parameters
+    
+    | Key | Type | Default | Description |
+    |-----|------|---------|-------------|
+    | service.annotations | object | `{}` | Annotations to add to the service. |
+    | service.labels | object | `{}` | Labels to add to the service. |
+    | service.nodePort | string | `nil` | Specifies the node port number (only for `NodePort` service type). |
+    | service.port | int | `9001` | Specifies the service port number. |
+    | service.portName | string | `"proxy"` | Specifies the service port name. |
+    | service.type | string | `"ClusterIP"` | Specifies the service type should be created (`ClusterIP`, `NodePort`or `LoadBalancer`) |
+    
+    ### Ingress Parameters
+    
+    | Key | Type | Default | Description |
+    |-----|------|---------|-------------|
+    | ingress.annotations | object | `{}` | Annotations to add to the ingress. |
+    | ingress.className | string | `""` | Set the IngressClass to use for the capsule-proxy ingress (do not set via annotations if setting here). |
+    | ingress.enabled | bool | `false` | Specifies whether an ingress should be created. |
+    | ingress.hosts[0] | object | `{"host":"projectcapsule.dev","paths":["/"]}` | Set the host configuration for the capsule-proxy ingress. |
+    | ingress.hosts[0].paths | list | `["/"]` | Set the path configuration for the capsule-proxy ingress. |
+    | ingress.labels | object | `{}` | Labels to add to the ingress. |
+    | ingress.tls | list | `[]` | Set the tls configuration for the capsule-proxy ingress. |
+    
+    ### Autoscaler Parameters
+    
+    | Key | Type | Default | Description |
+    |-----|------|---------|-------------|
+    | autoscaling.annotations | object | `{}` | Annotations to add to the hpa. |
+    | autoscaling.behavior | object | `{}` | HPA [behavior](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/) |
+    | autoscaling.enabled | bool | `false` | Specifies whether an hpa for capsule-proxy should be created. |
+    | autoscaling.labels | object | `{}` | Labels to add to the hpa. |
+    | autoscaling.maxReplicas | int | `3` | Set the maxReplicas for capsule-proxy hpa. |
+    | autoscaling.metrics | list | `[]` | Custom [metrics-objects](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale-walkthrough/#autoscaling-on-multiple-metrics-and-custom-metrics) for capsule-proxy hpa |
+    | autoscaling.minReplicas | int | `1` | Set the minReplicas for capsule-proxy hpa. |
+    | autoscaling.targetCPUUtilizationPercentage | int | `0` | Set the targetCPUUtilizationPercentage for capsule-proxy hpa. |
+    | autoscaling.targetMemoryUtilizationPercentage | int | `0` | Set the targetMemoryUtilizationPercentage for capsule-proxy hpa. |
+    
+    ### ServiceMonitor Parameters
+    
+    | Key | Type | Default | Description |
+    |-----|------|---------|-------------|
+    | serviceMonitor.annotations | object | `{}` | Assign additional Annotations |
+    | serviceMonitor.enabled | bool | `false` | Enable ServiceMonitor |
+    | serviceMonitor.endpoint.interval | string | `"15s"` | Set the scrape interval for the endpoint of the serviceMonitor |
+    | serviceMonitor.endpoint.metricRelabelings | list | `[]` | Set metricRelabelings for the endpoint of the serviceMonitor |
+    | serviceMonitor.endpoint.relabelings | list | `[]` | Set relabelings for the endpoint of the serviceMonitor |
+    | serviceMonitor.endpoint.scrapeTimeout | string | `""` | Set the scrape timeout for the endpoint of the serviceMonitor |
+    | serviceMonitor.labels | object | `{}` | Assign additional labels according to Prometheus' serviceMonitorSelector matching labels |
+    | serviceMonitor.matchLabels | object | `{}` | Change matching labels |
+    | serviceMonitor.namespace | string | `""` | Install the ServiceMonitor into a different Namespace, as the monitoring stack one (default: the release one) |
+    | serviceMonitor.serviceAccount.name | string | `""` |  |
+    | serviceMonitor.serviceAccount.namespace | string | `""` |  |
+    | serviceMonitor.targetLabels | list | `[]` | Set targetLabels for the serviceMonitor |
+    
+    ## Created resources
+    
+    This Helm Chart cretes the following Kubernetes resources in the release namespace:
+    
+    * Capsule-proxy Namespace
+    * Capsule-proxy Deployment
+    * Capsule-proxy Service
+    * RBAC Cluster Roles
+    
+    And optionally, depending on the values set:
+    
+    * Capsule-proxy ServiceAccount
+    * Capsule-proxy Ingress
+    * Capsule-proxy SSL certificate and key secret
+    
+    ## Using TLS with capsule-proxy
+    
+    If you plan to use you own certificates for `capsule-proxy`, you need to create a secret in a namespace, where `capsule-proxy` will be deployed named the same, as your `capsule-proxy` deployment.
+    
+    For example, if your deployment name is `capsule-filter` and it is deployed to `capsule-system` and `options.SSLCertFileName` is set to `tls.crt` and `options.SSLKeyFileName` is set to `tls.key` you secret should be like:
+    
+    ```yml
+    apiVersion: v1
+    data:
+      tls.crt: <>
+      tls.key: <>
+    kind: Secret
+    metadata:
+      name: capsule-filter
+      namespace: capsule-system
+    type: Opaque
+    ```
+    Otherwise, you can set `options.generateCertificates` to `true` and self-signed certificates will be generated during deployment process by a post-install job.
+    
+icon: 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

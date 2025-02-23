@@ -1,0 +1,25 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: argo-workflows
+  namespace: ${releaseNamespace}
+spec:
+  chart:
+    spec:
+      chart: argo-workflows
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: argo
+        namespace: ${releaseNamespace}
+      version: 0.45.7
+  interval: 1m0s
+  targetNamespace: ${releaseNamespace}
+  releaseName: argo-workflows
+  valuesFrom:
+    - kind: ConfigMap
+      name: argo-workflows-0.45.7-defaults
+    - kind: ConfigMap
+      name: argo-workflows-overrides
+      optional: true

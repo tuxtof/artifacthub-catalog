@@ -1,0 +1,25 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: capsule-proxy
+  namespace: ${releaseNamespace}
+spec:
+  chart:
+    spec:
+      chart: capsule-proxy
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: capsule-proxy
+        namespace: ${releaseNamespace}
+      version: 0.9.1
+  interval: 1m0s
+  targetNamespace: ${releaseNamespace}
+  releaseName: capsule-proxy
+  valuesFrom:
+    - kind: ConfigMap
+      name: capsule-proxy-0.9.1-defaults
+    - kind: ConfigMap
+      name: capsule-proxy-overrides
+      optional: true

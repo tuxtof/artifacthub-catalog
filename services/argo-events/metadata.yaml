@@ -1,0 +1,257 @@
+displayName: argo-events
+description: A Helm chart for Argo Events, the event-driven workflow automation framework
+category:
+- artifact-hub
+type: catalog
+allowMultipleInstances: false
+scope:
+- workspace
+licensing:
+- Ultimate
+- Enterprise
+certifications:
+overview: |
+    # Argo-Events Chart
+    
+    This is a **community maintained** chart. It installs the [argo-events](https://github.com/argoproj/argo-events) application. This application comes packaged with:
+    
+    - Sensor Custom Resource Definition (See CRD Notes)
+    - EventSource Custom Resource Definition (See CRD Notes)
+    - EventBus Custom Resource Definition (See CRD Notes)
+    - Controller Deployment
+    - Validation Webhook Deployment
+    - Service Accounts
+    - Roles / Cluster Roles
+    - Role Bindings / Cluster Role Bindings
+    
+    To regenerate this document, please run:
+    
+    ```shell
+    ./scripts/helm-docs.sh
+    ```
+    
+    ## Installing the Chart
+    
+    To install the chart with the release name `my-release`:
+    
+    ```console
+    $ helm repo add argo https://argoproj.github.io/argo-helm
+    "argo" has been added to your repositories
+    
+    $ helm install my-release argo/argo-events
+    NAME: my-release
+    ...
+    ```
+    
+    ## Upgrading
+    
+    ### Custom resource definitions
+    
+    Some users would prefer to install the CRDs _outside_ of the chart. You can disable the CRD installation of this chart by using `--set crds.install=false` when installing the chart.
+    
+    You can install the CRDs manually from `templates/crds` folder.
+    
+    ### 2.0.*
+    
+    Custom resource definitions were moved to `templates` folder so they can be managed by Helm.
+    
+    To adopt already created CRDs please use following command:
+    
+    ```bash
+    for crd in "eventbus.argoproj.io" "eventsources.argoproj.io" "sensors.argoproj.io"; do
+      kubectl label --overwrite crd $crd app.kubernetes.io/managed-by=Helm
+      kubectl annotate --overwrite crd $crd meta.helm.sh/release-namespace=<YOUR_NAMESPACE>
+      kubectl annotate --overwrite crd $crd meta.helm.sh/release-name=<YOUR_HELM_RELEASE>
+    done
+    ```
+    
+    ## Values
+    
+    ### General parameters
+    
+    | Key | Type | Default | Description |
+    |-----|------|---------|-------------|
+    | configs.jetstream.settings.maxFileStore | int | `-1` | Maximum size of the file storage (e.g. 20G) |
+    | configs.jetstream.settings.maxMemoryStore | int | `-1` | Maximum size of the memory storage (e.g. 1G) |
+    | configs.jetstream.streamConfig.discard | int | `0` | 0: DiscardOld, 1: DiscardNew |
+    | configs.jetstream.streamConfig.duplicates | string | `"300s"` | Not documented at the moment |
+    | configs.jetstream.streamConfig.maxAge | string | `"72h"` | Maximum age of existing messages, i.e. “72h”, “4h35m” |
+    | configs.jetstream.streamConfig.maxBytes | string | `"1GB"` |  |
+    | configs.jetstream.streamConfig.maxMsgs | int | `1000000` | Maximum number of messages before expiring oldest message |
+    | configs.jetstream.streamConfig.replicas | int | `3` | Number of replicas, defaults to 3 and requires minimal 3 |
+    | configs.jetstream.streamConfig.retention | int | `0` | 0: Limits, 1: Interest, 2: WorkQueue |
+    | configs.jetstream.versions[0].configReloaderImage | string | `"natsio/nats-server-config-reloader:0.14.0"` |  |
+    | configs.jetstream.versions[0].metricsExporterImage | string | `"natsio/prometheus-nats-exporter:0.14.0"` |  |
+    | configs.jetstream.versions[0].natsImage | string | `"nats:2.10.10"` |  |
+    | configs.jetstream.versions[0].startCommand | string | `"/nats-server"` |  |
+    | configs.jetstream.versions[0].version | string | `"latest"` |  |
+    | configs.jetstream.versions[1].configReloaderImage | string | `"natsio/nats-server-config-reloader:0.7.0"` |  |
+    | configs.jetstream.versions[1].metricsExporterImage | string | `"natsio/prometheus-nats-exporter:0.9.1"` |  |
+    | configs.jetstream.versions[1].natsImage | string | `"nats:2.8.1"` |  |
+    | configs.jetstream.versions[1].startCommand | string | `"/nats-server"` |  |
+    | configs.jetstream.versions[1].version | string | `"2.8.1"` |  |
+    | configs.jetstream.versions[2].configReloaderImage | string | `"natsio/nats-server-config-reloader:0.7.0"` |  |
+    | configs.jetstream.versions[2].metricsExporterImage | string | `"natsio/prometheus-nats-exporter:0.9.1"` |  |
+    | configs.jetstream.versions[2].natsImage | string | `"nats:2.8.1-alpine"` |  |
+    | configs.jetstream.versions[2].startCommand | string | `"nats-server"` |  |
+    | configs.jetstream.versions[2].version | string | `"2.8.1-alpine"` |  |
+    | configs.jetstream.versions[3].configReloaderImage | string | `"natsio/nats-server-config-reloader:0.7.0"` |  |
+    | configs.jetstream.versions[3].metricsExporterImage | string | `"natsio/prometheus-nats-exporter:0.9.1"` |  |
+    | configs.jetstream.versions[3].natsImage | string | `"nats:2.8.2"` |  |
+    | configs.jetstream.versions[3].startCommand | string | `"/nats-server"` |  |
+    | configs.jetstream.versions[3].version | string | `"2.8.2"` |  |
+    | configs.jetstream.versions[4].configReloaderImage | string | `"natsio/nats-server-config-reloader:0.7.0"` |  |
+    | configs.jetstream.versions[4].metricsExporterImage | string | `"natsio/prometheus-nats-exporter:0.9.1"` |  |
+    | configs.jetstream.versions[4].natsImage | string | `"nats:2.8.2-alpine"` |  |
+    | configs.jetstream.versions[4].startCommand | string | `"nats-server"` |  |
+    | configs.jetstream.versions[4].version | string | `"2.8.2-alpine"` |  |
+    | configs.jetstream.versions[5].configReloaderImage | string | `"natsio/nats-server-config-reloader:0.7.0"` |  |
+    | configs.jetstream.versions[5].metricsExporterImage | string | `"natsio/prometheus-nats-exporter:0.9.1"` |  |
+    | configs.jetstream.versions[5].natsImage | string | `"nats:2.9.1"` |  |
+    | configs.jetstream.versions[5].startCommand | string | `"/nats-server"` |  |
+    | configs.jetstream.versions[5].version | string | `"2.9.1"` |  |
+    | configs.jetstream.versions[6].configReloaderImage | string | `"natsio/nats-server-config-reloader:0.7.0"` |  |
+    | configs.jetstream.versions[6].metricsExporterImage | string | `"natsio/prometheus-nats-exporter:0.9.1"` |  |
+    | configs.jetstream.versions[6].natsImage | string | `"nats:2.9.12"` |  |
+    | configs.jetstream.versions[6].startCommand | string | `"/nats-server"` |  |
+    | configs.jetstream.versions[6].version | string | `"2.9.12"` |  |
+    | configs.jetstream.versions[7].configReloaderImage | string | `"natsio/nats-server-config-reloader:0.7.0"` |  |
+    | configs.jetstream.versions[7].metricsExporterImage | string | `"natsio/prometheus-nats-exporter:0.9.1"` |  |
+    | configs.jetstream.versions[7].natsImage | string | `"nats:2.9.16"` |  |
+    | configs.jetstream.versions[7].startCommand | string | `"/nats-server"` |  |
+    | configs.jetstream.versions[7].version | string | `"2.9.16"` |  |
+    | configs.jetstream.versions[8].configReloaderImage | string | `"natsio/nats-server-config-reloader:0.14.0"` |  |
+    | configs.jetstream.versions[8].metricsExporterImage | string | `"natsio/prometheus-nats-exporter:0.14.0"` |  |
+    | configs.jetstream.versions[8].natsImage | string | `"nats:2.10.10"` |  |
+    | configs.jetstream.versions[8].startCommand | string | `"/nats-server"` |  |
+    | configs.jetstream.versions[8].version | string | `"2.10.10"` |  |
+    | configs.nats.versions | list | See [values.yaml] | Supported versions of NATS event bus |
+    | crds.annotations | object | `{}` | Annotations to be added to all CRDs |
+    | crds.install | bool | `true` | Install and upgrade CRDs |
+    | crds.keep | bool | `true` | Keep CRDs on chart uninstall |
+    | createAggregateRoles | bool | `false` | Create clusterroles that extend existing clusterroles to interact with argo-events crds Only applies for cluster-wide installation (`controller.rbac.namespaced: false`) |
+    | extraObjects | list | `[]` | Array of extra K8s manifests to deploy |
+    | fullnameOverride | string | `""` | String to fully override "argo-events.fullname" template |
+    | global.additionalLabels | object | `{}` | Additional labels to add to all resources |
+    | global.hostAliases | list | `[]` | Mapping between IP and hostnames that will be injected as entries in the pod's hosts files |
+    | global.image.imagePullPolicy | string | `"IfNotPresent"` | If defined, a imagePullPolicy applied to all Argo Events deployments |
+    | global.image.repository | string | `"quay.io/argoproj/argo-events"` | If defined, a repository applied to all Argo Events deployments |
+    | global.image.tag | string | `""` | Overrides the global Argo Events image tag whose default is the chart appVersion |
+    | global.imagePullSecrets | list | `[]` | If defined, uses a Secret to pull an image from a private Docker registry or repository |
+    | global.podAnnotations | object | `{}` | Annotations for the all deployed pods |
+    | global.podLabels | object | `{}` | Labels for the all deployed pods |
+    | global.securityContext | object | `{}` | Toggle and define securityContext. See [values.yaml] |
+    | nameOverride | string | `"argo-events"` | Provide a name in place of `argo-events` |
+    | namespaceOverride | string | `.Release.Namespace` | Override the namespace |
+    | openshift | bool | `false` | Deploy on OpenShift |
+    
+    ### Controller
+    
+    | Key | Type | Default | Description |
+    |-----|------|---------|-------------|
+    | controller.affinity | object | `{}` | Assign custom [affinity] rules to the deployment |
+    | controller.containerSecurityContext | object | `{}` | Events controller container-level security context |
+    | controller.env | list | `[]` | Environment variables to pass to events controller |
+    | controller.envFrom | list | `[]` (See [values.yaml]) | envFrom to pass to events controller |
+    | controller.extraContainers | list | `[]` | Additional containers to be added to the events controller pods |
+    | controller.image.imagePullPolicy | string | `""` (defaults to global.image.imagePullPolicy) | Image pull policy for the events controller |
+    | controller.image.repository | string | `""` (defaults to global.image.repository) | Repository to use for the events controller |
+    | controller.image.tag | string | `""` (defaults to global.image.tag) | Tag to use for the events controller |
+    | controller.initContainers | list | `[]` | Init containers to add to the events controller pods |
+    | controller.livenessProbe.failureThreshold | int | `3` | Minimum consecutive failures for the [probe] to be considered failed after having succeeded |
+    | controller.livenessProbe.initialDelaySeconds | int | `10` | Number of seconds after the container has started before [probe] is initiated |
+    | controller.livenessProbe.periodSeconds | int | `10` | How often (in seconds) to perform the [probe] |
+    | controller.livenessProbe.successThreshold | int | `1` | Minimum consecutive successes for the [probe] to be considered successful after having failed |
+    | controller.livenessProbe.timeoutSeconds | int | `1` | Number of seconds after which the [probe] times out |
+    | controller.metrics.enabled | bool | `false` | Deploy metrics service |
+    | controller.metrics.service.annotations | object | `{}` | Metrics service annotations |
+    | controller.metrics.service.labels | object | `{}` | Metrics service labels |
+    | controller.metrics.service.servicePort | int | `8082` | Metrics service port |
+    | controller.metrics.serviceMonitor.additionalLabels | object | `{}` | Prometheus ServiceMonitor labels |
+    | controller.metrics.serviceMonitor.enabled | bool | `false` | Enable a prometheus ServiceMonitor |
+    | controller.metrics.serviceMonitor.interval | string | `"30s"` | Prometheus ServiceMonitor interval |
+    | controller.metrics.serviceMonitor.metricRelabelings | list | `[]` | Prometheus [MetricRelabelConfigs] to apply to samples before ingestion |
+    | controller.metrics.serviceMonitor.namespace | string | `""` | Prometheus ServiceMonitor namespace |
+    | controller.metrics.serviceMonitor.relabelings | list | `[]` | Prometheus [RelabelConfigs] to apply to samples before scraping |
+    | controller.metrics.serviceMonitor.selector | object | `{}` | Prometheus ServiceMonitor selector |
+    | controller.name | string | `"controller-manager"` | Argo Events controller name string |
+    | controller.nodeSelector | object | `{}` | [Node selector] |
+    | controller.pdb.annotations | object | `{}` | Annotations to be added to events controller pdb |
+    | controller.pdb.enabled | bool | `false` | Deploy a PodDisruptionBudget for the events controller |
+    | controller.pdb.labels | object | `{}` | Labels to be added to events controller pdb |
+    | controller.podAnnotations | object | `{}` | Annotations to be added to events controller pods |
+    | controller.podLabels | object | `{}` | Labels to be added to events controller pods |
+    | controller.priorityClassName | string | `""` | Priority class for the events controller pods |
+    | controller.rbac.enabled | bool | `true` | Create events controller RBAC |
+    | controller.rbac.managedNamespace | string | `""` | Additional namespace to be monitored by the controller |
+    | controller.rbac.namespaced | bool | `false` | Restrict events controller to operate only in a single namespace instead of cluster-wide scope. |
+    | controller.rbac.rules | list | `[]` | Additional user rules for event controller's rbac |
+    | controller.readinessProbe.failureThreshold | int | `3` | Minimum consecutive failures for the [probe] to be considered failed after having succeeded |
+    | controller.readinessProbe.initialDelaySeconds | int | `10` | Number of seconds after the container has started before [probe] is initiated |
+    | controller.readinessProbe.periodSeconds | int | `10` | How often (in seconds) to perform the [probe] |
+    | controller.readinessProbe.successThreshold | int | `1` | Minimum consecutive successes for the [probe] to be considered successful after having failed |
+    | controller.readinessProbe.timeoutSeconds | int | `1` | Number of seconds after which the [probe] times out |
+    | controller.replicas | int | `1` | The number of events controller pods to run. |
+    | controller.resources | object | `{}` | Resource limits and requests for the events controller pods |
+    | controller.serviceAccount.annotations | object | `{}` | Annotations applied to created service account |
+    | controller.serviceAccount.automountServiceAccountToken | bool | `true` | Automount API credentials for the Service Account |
+    | controller.serviceAccount.create | bool | `true` | Create a service account for the events controller |
+    | controller.serviceAccount.name | string | `""` | Service account name |
+    | controller.tolerations | list | `[]` | [Tolerations] for use with node taints |
+    | controller.topologySpreadConstraints | list | `[]` | Assign custom [TopologySpreadConstraints] rules to the events controller |
+    | controller.volumeMounts | list | `[]` | Additional volumeMounts to the events controller main container |
+    | controller.volumes | list | `[]` | Additional volumes to the events controller pod |
+    
+    ### Webhook
+    
+    | Key | Type | Default | Description |
+    |-----|------|---------|-------------|
+    | webhook.affinity | object | `{}` | Assign custom [affinity] rules to the deployment |
+    | webhook.containerSecurityContext | object | `{}` | Event controller container-level security context |
+    | webhook.enabled | bool | `false` | Enable admission webhook. Applies only for cluster-wide installation |
+    | webhook.env | list | `[]` (See [values.yaml]) | Environment variables to pass to event controller |
+    | webhook.envFrom | list | `[]` (See [values.yaml]) | envFrom to pass to event controller |
+    | webhook.image.imagePullPolicy | string | `""` (defaults to global.image.imagePullPolicy) | Image pull policy for the event controller |
+    | webhook.image.repository | string | `""` (defaults to global.image.repository) | Repository to use for the event controller |
+    | webhook.image.tag | string | `""` (defaults to global.image.tag) | Tag to use for the event controller |
+    | webhook.livenessProbe.failureThreshold | int | `3` | Minimum consecutive failures for the [probe] to be considered failed after having succeeded |
+    | webhook.livenessProbe.initialDelaySeconds | int | `10` | Number of seconds after the container has started before [probe] is initiated |
+    | webhook.livenessProbe.periodSeconds | int | `10` | How often (in seconds) to perform the [probe] |
+    | webhook.livenessProbe.successThreshold | int | `1` | Minimum consecutive successes for the [probe] to be considered successful after having failed |
+    | webhook.livenessProbe.timeoutSeconds | int | `1` | Number of seconds after which the [probe] times out |
+    | webhook.name | string | `"events-webhook"` | Argo Events admission webhook name string |
+    | webhook.nodeSelector | object | `{}` | [Node selector] |
+    | webhook.pdb.annotations | object | `{}` | Annotations to be added to admission webhook pdb |
+    | webhook.pdb.enabled | bool | `false` | Deploy a PodDisruptionBudget for the admission webhook |
+    | webhook.pdb.labels | object | `{}` | Labels to be added to admission webhook pdb |
+    | webhook.podAnnotations | object | `{}` | Annotations to be added to event controller pods |
+    | webhook.podLabels | object | `{}` | Labels to be added to event controller pods |
+    | webhook.port | int | `443` | Port to listen on |
+    | webhook.priorityClassName | string | `""` | Priority class for the event controller pods |
+    | webhook.readinessProbe.failureThreshold | int | `3` | Minimum consecutive failures for the [probe] to be considered failed after having succeeded |
+    | webhook.readinessProbe.initialDelaySeconds | int | `10` | Number of seconds after the container has started before [probe] is initiated |
+    | webhook.readinessProbe.periodSeconds | int | `10` | How often (in seconds) to perform the [probe] |
+    | webhook.readinessProbe.successThreshold | int | `1` | Minimum consecutive successes for the [probe] to be considered successful after having failed |
+    | webhook.readinessProbe.timeoutSeconds | int | `1` | Number of seconds after which the [probe] times out |
+    | webhook.replicas | int | `1` | The number of webhook pods to run. |
+    | webhook.resources | object | `{}` | Resource limits and requests for the event controller pods |
+    | webhook.serviceAccount.annotations | object | `{}` | Annotations applied to created service account |
+    | webhook.serviceAccount.automountServiceAccountToken | bool | `true` | Automount API credentials for the Service Account |
+    | webhook.serviceAccount.create | bool | `true` | Create a service account for the admission webhook |
+    | webhook.serviceAccount.name | string | `""` | Service account name |
+    | webhook.tolerations | list | `[]` | [Tolerations] for use with node taints |
+    | webhook.topologySpreadConstraints | list | `[]` | Assign custom [TopologySpreadConstraints] rules to the event controller |
+    | webhook.volumeMounts | list | `[]` | Additional volumeMounts to the event controller main container |
+    | webhook.volumes | list | `[]` | Additional volumes to the event controller pod |
+    
+    ----------------------------------------------
+    Autogenerated from chart metadata using [helm-docs](https://github.com/norwoodj/helm-docs)
+    
+    [affinity]: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/
+    [Node selector]: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector
+    [probe]: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#container-probes
+    [Tolerations]: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
+    [TopologySpreadConstraints]: https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/
+    [values.yaml]: values.yaml
+    
+icon: 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

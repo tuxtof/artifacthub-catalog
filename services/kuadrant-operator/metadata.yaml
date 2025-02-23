@@ -1,0 +1,91 @@
+displayName: kuadrant-operator
+description: The Operator to install and manage the lifecycle of the Kuadrant components deployments.
+category:
+- artifact-hub
+type: catalog
+allowMultipleInstances: false
+scope:
+- workspace
+licensing:
+- Ultimate
+- Enterprise
+certifications:
+overview: |
+    # Kuadrant Operator
+    
+    This is the Helm Chart to install the official Kuadrant Kubernetes Operator
+    
+    ## Installation
+    
+    ### Install Dependencies
+    
+    Follow the steps below to install the following dependencies for Kuadrant Operator:
+    - [Gateway API](https://gateway-api.sigs.k8s.io/)
+    - [cert-manager](https://cert-manager.io/)
+    - A Gateway Provider [Istio](https://istio.io/latest/docs/ambient/install/helm/)
+    
+    [Envoy Gateway](https://gateway.envoyproxy.io/) is also an option as a gateway provider, **Steps Coming soon!**
+    
+    #### Install Kubernetes Gateway API:
+    
+     ```sh
+     kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.1.0/standard-install.yaml
+     ```
+    
+    #### Install cert-manager
+    
+     ```sh
+     helm repo add jetstack https://charts.jetstack.io --force-update
+     helm install \
+       cert-manager jetstack/cert-manager \
+       --namespace cert-manager \
+       --create-namespace \
+       --version v1.15.3 \
+       --set crds.enabled=true
+     ```
+    
+    #### Install Istio (A Gateway Provider):
+    
+     ```sh
+     helm install sail-operator \
+             --create-namespace \
+             --namespace istio-system \
+             --wait \
+             --timeout=300s \
+             https://github.com/istio-ecosystem/sail-operator/releases/download/0.1.0/sail-operator-0.1.0.tgz
+    
+     kubectl apply -f -<<EOF
+     apiVersion: sailoperator.io/v1alpha1
+     kind: Istio
+     metadata:
+       name: default
+     spec:
+       # Supported values for sail-operator v0.1.0 are [v1.22.4,v1.23.0]
+       version: v1.23.0
+       namespace: istio-system
+       # Disable autoscaling to reduce dev resources
+       values:
+         pilot:
+           autoscaleEnabled: false
+     EOF
+     ```
+    
+    ### Install Kuadrant
+    
+    ```sh
+    helm repo add kuadrant https://kuadrant.io/helm-charts/ --force-update
+    helm install \
+     kuadrant-operator kuadrant/kuadrant-operator \
+     --create-namespace \
+     --namespace kuadrant-system
+    ```
+    
+    ### Parameters
+    
+    **Coming soon!** At the moment, there's no configuration parameters exposed.
+    
+    ## Usage
+    
+    Read the documentation and user guides in [Kuadrant.io](https://docs.kuadrant.io).
+    
+icon: iVBORw0KGgoAAAANSUhEUgAAAFAAAABQCAYAAACOEfKtAAAKLElEQVR4nOSdbYxcVRmAn/fcO+sCKhhjgykLMSGo8ZeJX/CHhN0lEooiRhS/g9XSgChaaQW0topSQauIFqqgDVESlFTtrn+669cPFY3xj4kGlR/drTEQIg1Yd3fmntecr5nb3W672+7M3Du+ybTd7p378cz7ec57zuTAk8BLAAsIKxeNx7eAS4C/Ayaep1IyNjGLFSGzigoNoAlcC1xOoRvJjEFUUVVEmLryvBWf2wE4Arz4NO7PgXwV8EQVAY5OzGJQCpNjbJHHD/zNwKPAi4CvgdyCao5ogRgVlIMrhGjiCTU+uK7ilY5vdZ3CKcr45CxDFP4uO/BkA/CTCM9p4sdBd4C632XufYUVr7UrERO18HRflZPxyRmOHAFVg4okzXsL6GPAUFSARvz/zyKy0f/ba+LKr2O6+RD9Eqc9xljWrYNWB97VwA8jNFt6dqd1BbAHuMwda9AsnedkMnAA3UOrCNYa5ubaGnZN9HmN6HbKz52syIH+PjAyL3mRjhk/CcSBAugedngY3njoEKpe85yPe3uElx8HXhITtfBc4OEzdMFpoIh72RPHxIEBOOo1xfD8Ufj9yEgy22sjPHMCeEmy+J5LLWa7A+piT2OhiOc+vgwEQBcwCq8yltyQ4F0HPBLN82TwkiR/eDvoJYop5ocbmTvB6IGZ476h9gDHD8wiouQKVtvw3hP9WYqnK33O5A8NyF5RO+wNGSR/QXbcN9Qa4NjkYf+3S1WQNrz3Oz8WtY5TSLNSbvwahG2K+IBiW5bRyaVaWFuAYwdmyPPwb9V2tP0AsK9UZp5qjppM+VZRvUissWrJVHTJgbUE6OA5ey2a1tW2KdpeD3yvVNOfToKf/OYZoLuMNb76ajVaS3LD2gEcmziM+trMVbgmma2rIh5cI3hJ8ni+q4u8denw3JAdmh/KFp+6VgBHJ12SnDI0zUP9ykeAb68xvCTJZncUmQoSfh6fONw+oDYA3U07FxSKd0k+bzPwQJfgEX2hO/elzUZzlCKzxDIvSS0Ajh/4ZxuNumLf+zy5EfhWdPbdHNRIWrg1KqD/4/KohZUHODY5GwfQ1KcqGjTvo8B9pUGBbo4IJS28TI19nUWtotm8/9wqDnDswGz4wMUnEDlKS+BjwL090LyypA9q8+JfVBagSxcCGXGBw0U/p3mfCCPIFD3QvLIkv3eNQdad/cpziwZGXAlZSYDObL2jCXEvRlvdAnylD/CI13LXPQd429N/fcr9X5ZVUQPHYrkkIdvLYqqyFbi7T/DK4j7X656xZ5LmfioF0GmeaCje0TSSLNuAuyoAL1374pdnz18IalsqpjIAfXIaRz6wbZ93O/ClCsCjNIU7BFwhoS6uBsDRidlgsKou3mY+VRH9DPCFisBLku7hChHrfrB9B1gqzp3mGcW2RPgcsDN+4lWBR8nlvcna/KVzttFfgGnCRgKgTKAQzXYA2yO8rELwiPdiYyfHay3avyDiZ886N+WjrQp3+jnaasJLkmaZLj7LtPoDcLxstqpGxQUM+SJwW4SXVxQepft6fZoL7amM+iLchwwXc40zW1R3AbeWNK/KkgC+uoDhngL0FUawWw/PTx2KuAR5S0nzqi4J4Hko5/fMhMc6g5Ci6jRPi1iabamJ5iVJw/3DCBf1BGBIVVyehxjUWEyhyO44OFDlgLGcpEByYddNppPnOatVA1oYsffGMb26mO1y8oquauAxSTLWuT2nefdFeM2aw3NyQdcAluFJGBK1YPcAN0bNa3Tr2j2Q5G5e1hWA450Z/NDhZLCiZi9wwwCYbVnOWXOApfYHcUEjB2utn3b88ADBSxp4VrdMWPJCsGpsEx6KE9+D4PMWS3cSaVWRZm6HjMq+2KNXd5+3nDS6oIFS/ntpN85giXbFhBXRvMW8wb4L+G403WY3rtVnKbrlA7XIQuGR07oe+E5pScEgyX/XHOB0Z4WPql/6kxljfATeGzVxECAm1/Sfrmjg9Ib17Qs5iGoxKrIJuH+AIDp5tmuVyNSGsiaiopqp2M3ANwfAJyYNfLqrtXAZIr4YlkzQm4BvDIhPPNT14axjIKpYkMxgbo49LnlpsWMd5cmejAcGiL67Ti1iFes08RbgqxFiUTOIidvfejYiPXVMYMFqWFr6SeCeEsQ6SFoBMNdTgPjoHMxZIkQ/F6x8CthVI3NO9zervfCBiyWlOBIDi6IZqttiD0wdNDEB/Etzgbm+zAsfLAeW0GSSg94GfmK96pqY7usPWdbH9jYXWETSgIMUguSC3BF7YqocWBKz39os729/4MErgzmH7TIovDmL3Q6+uaiKENOqz3+j/Mla6X+D5eJkGyRX2BF7ZPLS5hZVkDSd+biR5jPDplmN/sDpDSOxR0tcsl2I78iXzwN3lJYZVAFiuoefKVlccFYR8XmiaojO4vcqyWNQ+XRFIGq0iPkA0Pvv/jdYlsWZs18R4qejNExAie+P3loBiOnav9OjzX+AGGNMtQA6mbpyhLTGIQYRB/HL4BPufkMUv41AWL1uVrqPQM+lvXeVeoVshbUick/spekHRI3XfRZ0/w0XnI13M9rHDtWTSTs6i+8lbEWfuDts1dRziKk6egzsUw/MPpdZbapLwyoL0MnUVef5iKJ+yZK0wmJD/Tpwc4SoPYKYNlXbs3grhkoDJJqziT5RLa1QsfgB2ZtKD9ZNiGmZxXSRD/0RcmNUi0zCNHflAeI1cX1H2Xw/NQ1RPzWwuQeamCa6d0np51RF1QIgfgBifWySU6cSTQ052f3AptLORGsNMWnfLxk2P89aC8YFD5VOL2htABIrFtHUqqmpUWlv7L3pBsREars1RVjyfexoUr0AEued/d4JhV8aliA+CHxojSGmVVL7yfXX5qjJWBhaMlZZO4C0KxZBW0VMcfwM30PAB9cIYhq2Pwpsw8bx37y1ZH/VWgLEB5YR/NZFYUgxtc7ti1s/yWlCLGJwuluEJ7BijEucB2XnoiTTVwVtMEax0m7efBh4b8l/rRaijef5M6J3qZIhWJc7hWzgWKk1QKJPVBVs2FMmQfxB3MEtwVvpzsJJawvQTaIyF3rN0PllZmpqDxCfk42EZNAaWrYN8ZG4h6CWVlmeTJLp3gnyG0WzzCy4cNXW9sUyEABJU6bG8sIz4Q0zMwnio8A7SzsbnQhiEd/zK2vNzgBSbGHz8qj5EhkYgMT8bG4OHj//fGd4KTr/CHhHTEuWg2ij5v0LeB8NW9pT+8SIBgogabZPFYthrtPYvj/2ajePA1FLG4q/G5gxRWdH9ik/3bC8DBxAIkSDZZ2nVyRz/nHUxOaiLeuT33N19S/csSp+18oTmm4Ss8rt35d7VU6mN6z3XxJgXRbSCSw/jdsiL8RnTxq6E/VtyDlmdS13prQ6fLXbwpvSBtaVFBdY/MSyOJCSIE4AbwWeiz5yN8j28DtfGvr+sZVoHxHA/8fXYWgc9xJtgLS/DkOtbhRjTGykXfXXYfwvAAD//2nmEbmv7rqjAAAAAElFTkSuQmCC

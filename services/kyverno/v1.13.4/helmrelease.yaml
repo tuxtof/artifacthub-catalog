@@ -1,0 +1,25 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: kyverno
+  namespace: ${releaseNamespace}
+spec:
+  chart:
+    spec:
+      chart: kyverno
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: kyverno
+        namespace: ${releaseNamespace}
+      version: 3.3.7
+  interval: 1m0s
+  targetNamespace: ${releaseNamespace}
+  releaseName: kyverno
+  valuesFrom:
+    - kind: ConfigMap
+      name: kyverno-3.3.7-defaults
+    - kind: ConfigMap
+      name: kyverno-overrides
+      optional: true

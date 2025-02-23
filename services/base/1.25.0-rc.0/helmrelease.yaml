@@ -1,0 +1,25 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: base
+  namespace: ${releaseNamespace}
+spec:
+  chart:
+    spec:
+      chart: base
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: istio-official
+        namespace: ${releaseNamespace}
+      version: 1.25.0-rc.0
+  interval: 1m0s
+  targetNamespace: ${releaseNamespace}
+  releaseName: base
+  valuesFrom:
+    - kind: ConfigMap
+      name: base-1.25.0-rc.0-defaults
+    - kind: ConfigMap
+      name: base-overrides
+      optional: true

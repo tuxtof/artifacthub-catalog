@@ -1,0 +1,25 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: tetragon
+  namespace: ${releaseNamespace}
+spec:
+  chart:
+    spec:
+      chart: tetragon
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: cilium
+        namespace: ${releaseNamespace}
+      version: 1.3.0
+  interval: 1m0s
+  targetNamespace: ${releaseNamespace}
+  releaseName: tetragon
+  valuesFrom:
+    - kind: ConfigMap
+      name: tetragon-1.3.0-defaults
+    - kind: ConfigMap
+      name: tetragon-overrides
+      optional: true
